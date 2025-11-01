@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harmonogram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.css">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b1020">
+  <style>
+    :root{
+      --bg:#0b1020; --panel:#0f152b; --muted:#9aa1b2; --text:#e8ecf1; --accent:#7c9cff; --chip:#1b2340; --border:#1f2642;
+      --danger:#ff5a5a; --event:#203057; --event-border:#2b3b6a; --event-text:#e3e9ff; --event-remote:#ffb3b3;
+      --header-h: 65px; /* Domyślna wysokość nagłówka */
+    }
+    *{box-sizing:border-box}
+    
+    /* ZMIANA: Usunięto overflow:hidden i height:100dvh, dodano min-height i płynne przewijanie */
+    html{ scroll-behavior: smooth; }
+    body{
+      margin:0; 
+      min-height:100dvh;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; 
+      background:var(--bg); 
+      color:var(--text);
+    }
+    
+    /* ZMIANA: Header jest teraz w pełni 'fixed' i nie blokuje reszty strony */
+    header{
+      display:flex; align-items:center; justify-content:space-between; 
+      padding:16px 20px; 
+      border-bottom:1px solid var(--border); 
+      position:fixed; top:0; left:0; right:0; 
+      height: var(--header-h);
+      background:linear-gradient(180deg, #0b1020 0%, rgba(11,16,32,0.9) 100%); 
+      backdrop-filter:saturate(120%) blur(6px); 
+      z-index:10;
+    }
+    header h1{font-size:18px; margin:0; letter-spacing:.3px}
+    .seg{display:flex; gap:6px; background:#0c1330; border:1px solid var(--border); padding:4px; border-radius:999px}
+    .seg button{background:transparent; color:var(--text); border:0; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:700; font-size:12px; transition: background 0.2s, color 0.2s;}
+    .seg button[aria-pressed="true"]{background:var(--accent); color:#0a0f21}
+
+    /* ZMIANA: `main` nie jest już absolutnie pozycjonowany. Ma padding, by nie chować się pod headerem. */
+    main{
+      padding: calc(var(--header-h) + 16px) 16px 16px;
+      display:grid; 
+      grid-template-columns: 320px 1fr; 
+      gap:16px;
+      align-items: start; /* Ważne dla sticky sidebar */
+    }
+
+    /* ZMIANA: Nowy breakpoint dla lepszej responsywności na tabletach */
+    @media (max-width: 1100px){
+      main{ grid-template-columns: 280px 1fr; }
+    }
+    @media (max-width: 900px){ 
+      main{
+        grid-template-columns: 1fr; 
+        padding-left: 12px;
+        padding-right: 12px;
+      } 
+    }
+
+    /* ZMIANA: Sidebar jest "lepki" na desktopie i ma własny scroll w razie potrzeby */
+    aside{
+      background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px;
+      position: sticky;
+      top: calc(var(--header-h) + 16px);
+      max-height: calc(100vh - var(--header-h) - 32px); /* Ograniczenie wysokości */
+      overflow-y: auto; /* Scrollbar jeśli filtry się nie mieszczą */
+    }
+    #calendar{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:8px;}
+
+    .section-title{margin:4px 0 10px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+    .filters{display:grid; gap:10px}
+    .group{display:grid; gap:6px; background:#0c1330; border:1px solid var(--border); padding:10px; border-radius:12px}
+    label{font-size:12px; color:var(--muted)}
+    select, button.reset{appearance:none; border:1px solid #2a335a; background:#0e1430; color:var(--text); padding:10px 12px; border-radius:10px; font-size:13px; width:100%;}
+    button.reset{background:var(--accent); color:#0a0f21; border:0; font-weight:700; cursor:pointer}
+
+    .stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px}
+    .card{background:#0d1430; border:1px solid var(--border); border-radius:12px; padding:10px}
+    .card h3{margin:0 0 6px; font-size:12px; color:var(--muted)}
+    .card .value{font-size:18px; font-weight:700}
+
+    /* FullCalendar dopracowanie */
+    .fc{--fc-border-color:#223057; --fc-page-bg-color:transparent; --fc-neutral-bg-color:#0f152b; --fc-list-event-hover-bg-color:#141b36;}
+    .fc .fc-toolbar-title{font-size:18px; font-weight:700; color:var(--text)}
+    .fc .fc-button{background:linear-gradient(180deg, #1a2447 0%, #0f1a3d 100%); border:1px solid #2a335a; color:var(--text); font-weight:600; border-radius:8px; padding:8px 14px; transition: all 0.2s;}
+    .fc .fc-button:hover{background:linear-gradient(180deg, #22305d 0%, #162244 100%); border-color:#3a4a7a; transform:translateY(-1px)}
+    .fc .fc-button:active{transform:translateY(0)}
+    .fc .fc-button-primary:not(:disabled).fc-button-active{background:linear-gradient(180deg, var(--accent) 0%, #5a7ee6 100%); color:#fff; border-color:var(--accent)}
+    .fc-theme-standard .fc-scrollgrid{border:1px solid var(--border); border-radius:12px; overflow:hidden}
+    .fc .fc-daygrid-day, .fc .fc-timegrid-slot{background:#0f152b}
+    .fc .fc-daygrid-day-number{color:var(--muted); font-weight:600; font-size:14px; padding:8px}
+    .fc .fc-col-header-cell{background:linear-gradient(180deg, #0d1430 0%, #0b1026 100%); border-color:var(--border); font-weight:700; color:var(--text); padding:12px 4px}
+    .fc .fc-daygrid-day.fc-day-today{background:rgba(124,156,255,0.08)}
+    .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{color:var(--accent); font-weight:700}
+    
+    /* Wydarzenia z gradientami */
+    .fc .fc-daygrid-event, .fc .fc-timegrid-event{
+      border-radius:8px; 
+      border:1px solid rgba(124,156,255,0.3); 
+      background:linear-gradient(135deg, rgba(32,48,87,0.9) 0%, rgba(20,35,70,0.9) 100%);
+      overflow:hidden;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .fc .fc-daygrid-event:hover, .fc .fc-timegrid-event:hover{
+      transform:translateY(-2px);
+      box-shadow: 0 4px 12px rgba(124,156,255,0.3);
+      border-color:rgba(124,156,255,0.5);
+    }
+    .fc .fc-daygrid-event{padding:6px 10px; min-height:32px}
+    .fc .fc-timegrid-event .fc-event-main{display:flex; align-items:center; justify-content:center; padding:6px 10px; height:100%}
+    .fc .fc-daygrid-event .evt, .fc .fc-timegrid-event .evt{
+      display:flex; 
+      flex-direction:column; 
+      align-items:center; 
+      justify-content:center; 
+      gap:3px; 
+      min-width:0; 
+      line-height:1.3; 
+      text-align:center; 
+      width:100%
+    }
+    .fc .fc-daygrid-event .t, .fc .fc-timegrid-event .t{
+      flex:0 0 auto; 
+      min-width:0; 
+      font-weight:700; 
+      font-size:14px; 
+      color:#e8ecf1;
+      white-space:normal; 
+      overflow:visible; 
+      text-overflow:clip; 
+      word-break:break-word;
+      display:-webkit-box; 
+      -webkit-box-orient:vertical; 
+      -webkit-line-clamp:3; 
+      line-clamp:3;
+    }
+    .fc .fc-daygrid-event .tm, .fc .fc-timegrid-event .tm{font-size:12px; color:#b8c5ff; font-weight:600}
+    
+    /* Wydarzenia zdalne - czerwony gradient */
+    .fc .fc-daygrid-event.remote, .fc .fc-timegrid-event.remote{
+      background:linear-gradient(135deg, rgba(255,65,65,0.2) 0%, rgba(200,40,40,0.2) 100%); 
+      border-color:rgba(255,65,65,0.4);
+    }
+    .fc .fc-daygrid-event.remote:hover, .fc .fc-timegrid-event.remote:hover{
+      border-color:rgba(255,65,65,0.6);
+      box-shadow: 0 4px 12px rgba(255,65,65,0.3);
+    }
+
+    /* Wyraźniejsze godziny */
+    .fc .fc-timegrid-axis{background:#0e1430}
+    .fc .fc-timegrid-slot, .fc .fc-timegrid-slot-lane{border-top-color:#1a2447}
+    .fc .fc-timegrid-slot:not(.fc-timegrid-slot-minor),
+    .fc .fc-timegrid-slot-lane:not(.fc-timegrid-slot-minor){border-top:1px solid #24335d}
+    .fc .fc-timegrid-slot.fc-timegrid-slot-main,
+    .fc .fc-timegrid-slot-lane.fc-timegrid-slot-main{border-top:2px solid #4a6bff}
+    
+    /* ZMIANA: Usunięto problematyczne hacki na ukrywanie scrollbarów FullCalendar */
+
+    /* Nie pokazuj zawartości dni spoza bieżącego miesiąca w widoku miesięcznym */
+    .fc .fc-daygrid-day.fc-day-other{ background:#0b1020; pointer-events: none; }
+    .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-top { opacity: 0.3; }
+
+    /* Mobile ulepszenia */
+    @media (max-width: 900px){
+      main{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      /* Na mobile: kafelek wychodzi poza sidebar i idzie na górę */
+      .next-card{
+        order: -3;
+        margin: 0 0 16px 0;
+        max-width: 600px;
+        width: 100%;
+      }
+      /* Kalendarz pod kafelkiem */
+      #calendar{
+        order: -2;
+        margin-bottom: 16px;
+        width: 100%;
+      }
+      /* Sidebar (bez kafelka który jest wyżej) na dole */
+      aside{
+        position: static;
+        max-height: none;
+        order: -1;
+        display: contents; /* Dzieci sidebara traktowane jak bezpośrednie dzieci main */
+      }
+      /* Filtry, stats i export z max-width */
+      .filters, .stats, .export, .section-title{
+        max-width: 600px;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      .fc .fc-toolbar{flex-wrap:wrap; gap:8px}
+      .fc .fc-toolbar-chunk{margin:4px 0}
+    }
+    @media (max-width: 700px){
+      .fc .fc-toolbar-title{font-size:16px}
+      .fc .fc-button{padding:6px 10px; font-size:12px}
+      .fc .fc-daygrid-event{padding:5px 8px; min-height:28px}
+      .fc .fc-daygrid-event .evt{gap:2px}
+      .fc .fc-daygrid-event .t{font-size:13px; -webkit-line-clamp:2; line-clamp:2}
+      .fc .fc-daygrid-event .tm{font-size:11px}
+      .fc .fc-daygrid-day-number{font-size:13px; padding:6px}
+      .fc .fc-col-header-cell{padding:8px 2px; font-size:12px}
+    }
+    @media (max-width: 480px){
+      header { padding: 10px 12px; }
+      header h1 { font-size: 15px; }
+      .seg button { padding: 6px 8px; font-size: 11px; }
+      .fc .fc-toolbar-title{font-size:14px}
+      .fc .fc-button{padding:5px 8px; font-size:11px}
+      .fc .fc-daygrid-event{padding:4px 6px; min-height:24px}
+      .fc .fc-daygrid-event .t{font-size:12px; font-weight:600}
+      .fc .fc-daygrid-event .tm{display:none}
+      .fc .fc-daygrid-day-number{font-size:12px; padding:4px}
+      main{padding-top:calc(var(--header-h) + 8px)}
+    }
+
+    /* Tooltip */
+    .tooltip{position:fixed; z-index:9999; background:#0f142b; border:1px solid #2a386b; color:var(--text); padding:10px 12px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.35); max-width:min(320px, calc(100vw - 20px)); pointer-events:none; transition: opacity 0.15s; }
+    .tt-title{font-weight:700; margin-bottom:6px}
+    .tt-row{display:flex; gap:8px; font-size:12px; color:#c7cfe6; padding:2px 0}
+    .tt-row span{color:var(--muted); min-width:90px; flex-shrink: 0;}
+    .tt-badge{margin-top:6px; display:inline-block; padding:4px 8px; border-radius:999px; font-size:11px; border:1px solid #3a466f}
+    .tt-remote{background:rgba(255,65,65,0.12); color:var(--event-remote); border-color:rgba(255,65,65,0.5)}
+
+    /* Eksport do Google Kalendarza */
+    .export{ margin-top:16px }
+    .gcal-btn{ display:flex; align-items:center; gap:10px; width:100%; padding:12px 14px; border-radius:12px; border:1px solid #2a335a; background:#1a223f; color:#fff; font-weight:700; cursor:pointer; transition: background .2s, border-color .2s, transform .05s; }
+    .gcal-btn:hover{ background:#22305d; border-color:#3a4a7a }
+    .gcal-btn:active{ transform: translateY(1px) }
+    .gcal-logo{ display:inline-flex; width:18px; height:18px }
+    .export-hint{ margin-top:8px; color:var(--muted); font-size:12px }
+
+    /* Kafelek: następne/trwające zajęcia */
+    .next-card{ 
+      background:linear-gradient(180deg,#0d1430 0%, #0b1026 100%); 
+      border:1px solid var(--border); 
+      border-radius:12px; 
+      padding:12px;
+      margin-bottom: 16px;
+      margin-top: 0;
+    }
+    .next-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px }
+    .next-status{ font-size:12px; color:var(--muted) }
+    .next-badge{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #2a335a; background:#0e1430; color:#c9d2ff }
+    .next-badge.remote{ color:#ffb3b3; border-color:rgba(255,65,65,0.5); background:rgba(255,65,65,0.08) }
+    .next-title{ font-weight:700; font-size:16px; line-height:1.3; color:var(--text); margin:4px 0 }
+    .next-time{ font-size:13px; color:#c9d2ff }
+    .next-room{ color:var(--muted) }
+    .progress{ height:8px; border-radius:999px; background:#142048; border:1px solid #223057; overflow:hidden; margin-top:10px }
+    .progress .bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #4a6bff); transition:width .3s ease }
+    .next-card.remote .progress .bar{ background:linear-gradient(90deg, #ff5a5a, #ff7a7a) }
+
+    /* Animacja feedbacku przycisku eksportu */
+    @keyframes shiver-kf{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+    .gcal-btn.shiver{animation: shiver-kf .3s ease}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Harmonogram</h1>
+    <div class="seg">
+      <button id="viewMonth" aria-pressed="true" data-view="dayGridMonth">Miesiąc</button>
+      <button id="viewWeek" aria-pressed="false" data-view="timeGridWeek">Tydzień</button>
+      <button id="viewDay" aria-pressed="false" data-view="timeGridDay">Dzień</button>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <!-- Kafelek następujących zajęć -->
+      <div class="next-card" id="nextCard" aria-live="polite">
+        <div class="next-header">
+          <div class="next-status" id="nextStatus">Wyszukiwanie najbliższych zajęć…</div>
+          <span class="next-badge" id="nextBadge" style="display:none">Zdalnie</span>
+        </div>
+        <div class="next-title" id="nextTitle">—</div>
+        <div class="next-time"><span id="nextRange">—</span> <span class="next-room" id="nextRoom"></span></div>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Postęp zajęć">
+          <div class="bar" id="nextProgress"></div>
+        </div>
+      </div>
+
+      <div class="section-title">Filtry</div>
+      <div class="filters">
+        <div class="group">
+          <label for="program">Kierunek studiów</label>
+          <select id="program"><option value="">Wszystkie</option></select>
+        </div>
+        <div class="group">
+          <label for="type">Rodzaj zajęć</label>
+          <select id="type"><option value="">Wszystkie</option></select>
+        </div>
+        <div class="group">
+          <label for="room">Sala</label>
+          <select id="room"><option value="">Wszystkie</option></select>
+        </div>
+        <button id="reset" class="reset">Wyczyść filtry</button>
+      </div>
+
+      <div class="stats">
+        <div class="card"><h3>Łącznie</h3><div class="value" id="statTotal">0</div></div>
+        <div class="card"><h3>Widocznych</h3><div class="value" id="statVisible">0</div></div>
+      </div>
+
+      <div class="export">
+        <button id="exportGoogle" class="gcal-btn" aria-label="Eksportuj do Google Kalendarza" title="Pobierz plik .ics z aktualnie przefiltrowanymi wydarzeniami">
+          <span class="gcal-logo" aria-hidden="true">
+            <!-- Prosty, własny znak w kolorach Google -->
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#EA4335" d="M24 9.5c3.38 0 6.44 1.18 8.85 3.13l6.63-6.63C35.6 2.25 30.12 0 24 0 14.6 0 6.45 5.4 2.55 13.2l7.92 6.15C12.16 13.5 17.61 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.5 24.5c0-1.55-.15-3.05-.44-4.5H24v9h12.7c-.55 2.95-2.19 5.45-4.66 7.13l7.15 5.57C43.93 37.5 46.5 31.42 46.5 24.5z"/>
+              <path fill="#FBBC05" d="M10.47 19.35l-7.92-6.15C.9 16.16 0 20.01 0 24c0 3.9.86 7.61 2.4 10.9l8.07-6.22C9.7 26.9 9.3 25.49 9.3 24c0-1.63.43-3.16 1.17-4.65z"/>
+              <path fill="#34A853" d="M24 48c6.06 0 11.16-2 14.9-5.4l-7.15-5.57c-2.04 1.38-4.66 2.2-7.75 2.2-6.4 0-11.86-4.03-13.87-9.61l-8.07 6.22C6.88 43.07 14.7 48 24 48z"/>
+            </svg>
+          </span>
+          <span>Importuj do Google Kalendarza</span>
+        </button>
+        <div class="export-hint">Pobierze plik .ics z obecnie przefiltrowanymi wydarzeniami. Następnie zaimportuj go w Google Kalendarzu.</div>
+      </div>
+    </aside>
+    <section id="calendar"></section>
+  </main>
+
+  <div id="tooltip" class="tooltip" style="display:none; opacity: 0;"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
+  <script>
+    // ZMIANA: Przeniesienie elementów DOM na górę dla lepszej organizacji
+    const calendarEl = document.getElementById('calendar');
+    const filterElements = {
+      program: document.getElementById('program'),
+      type: document.getElementById('type'),
+      room: document.getElementById('room'),
+    };
+    const statElements = {
+      total: document.getElementById('statTotal'),
+      visible: document.getElementById('statVisible'),
+    };
+    const viewButtons = document.querySelectorAll('.seg button');
+    const tooltip = document.getElementById('tooltip');
+    
+    const STORAGE_KEY = 'harm_filters_v1';
+    let rawData = { events: [] };
+    let fc;
+
+    // Funkcja do dynamicznego dostosowywania widoku
+    function getDayMax(){
+      const w = window.innerWidth;
+      if(w <= 480) return 2;
+      if(w <= 900) return 3;
+      return 4;
+    }
+
+    // ZMIANA: Uproszczona funkcja resize, głównie do ustawiania zmiennej CSS
+    function handleResize(){
+      const header = document.querySelector('header');
+      const headerHeight = header ? header.offsetHeight : 65;
+      document.documentElement.style.setProperty('--header-h', `${headerHeight}px`);
+      
+      if(fc){
+        fc.setOption('dayMaxEventRows', getDayMax());
+        // fc.updateSize() jest teraz mniej krytyczne, bo wysokość jest 'auto'
+      }
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('../harmonogram.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        rawData = await res.json();
+        rawData.events = (rawData.events || []).map(e => normalizeEvent(e));
+        
+        statElements.total.textContent = rawData.events.length;
+        initFilters(rawData.events);
+        initCalendar(rawData.events);
+        applyFilters();
+        handleResize();
+      } catch (error) {
+        console.error("Nie udało się załadować danych:", error);
+        calendarEl.innerHTML = `<p style="color: var(--danger); text-align: center; padding: 20px;">Błąd ładowania harmonogramu. Sprawdź konsolę, aby uzyskać więcej informacji.</p>`;
+      }
+    }
+
+    function normalizeEvent(e){
+      const out = { ...e };
+      if(!out.title && out.raw){ out.title = (String(out.raw).split(/\n|\r/)[0] || '').trim(); }
+      if(out.isRemote || out.color === 'red') out.classNames = ['remote'];
+      if(out.date && out.startTime){ out.start = out.date + 'T' + out.startTime; }
+      if(out.date && out.endTime){ out.end = out.date + 'T' + out.endTime; }
+      return out;
+    }
+    
+    function unique(values){ return [...new Set(values.filter(Boolean))].sort(); }
+
+    function initFilters(events){
+      const populateSelect = (selectEl, values) => {
+        for(const val of unique(values)){
+          const o = document.createElement('option'); o.value=o.textContent=val; selectEl.appendChild(o);
+        }
+      };
+      
+      populateSelect(filterElements.program, events.map(e => e.program));
+      // Automatyczne wykrywanie typu, jeśli nie jest podany
+      const typeSet = new Set(events.map(e=>e.type).filter(Boolean));
+      if(typeSet.size === 0) {
+        events.forEach(e => {
+          const t = (e.raw||'').toUpperCase();
+          if(t.includes(' LAB')) e.type='LAB';
+          else if(t.includes(' PROJEKT')) e.type='PROJEKT';
+          else if(/\bW\b/.test(t) || t.includes(' W\n')) e.type='W';
+          else if(t.includes(' ĆW') || t.includes(' ?W')) e.type='ĆW';
+        });
+      }
+      populateSelect(filterElements.type, events.map(e => e.type));
+      populateSelect(filterElements.room, events.map(e => e.location));
+
+      // Ładowanie zapisanych filtrów
+      try{
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        for (const key in saved) {
+          if (filterElements[key] && saved[key] && [...filterElements[key].options].some(o => o.value === saved[key])) {
+            filterElements[key].value = saved[key];
+          }
+        }
+      }catch(e){ console.warn("Nie udało się załadować filtrów z LocalStorage", e); }
+
+      // Event Listeners
+      Object.values(filterElements).forEach(el=> el.addEventListener('change', () => {
+        saveFilters();
+        applyFilters();
+      }));
+      document.getElementById('reset').addEventListener('click', ()=>{
+        Object.values(filterElements).forEach(el => el.value = '');
+        saveFilters();
+        applyFilters();
+      });
+      
+      // ZMIANA: Uproszczone przełączanie widoków
+      viewButtons.forEach(button => {
+        button.addEventListener('click', () => switchView(button.dataset.view));
+      });
+      
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
+    }
+    
+    function saveFilters(){
+      const data = { 
+        program: filterElements.program.value, 
+        type: filterElements.type.value, 
+        room: filterElements.room.value 
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function switchView(viewName){
+      if(!fc) return;
+      fc.changeView(viewName);
+      viewButtons.forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.view === viewName));
+      });
+      // Nie ma potrzeby save/apply/resize tutaj, bo to się dzieje w 'datesSet'
+    }
+
+    function initCalendar(events){
+      if(fc) fc.destroy();
+      fc = new FullCalendar.Calendar(calendarEl, {
+        locale: 'pl', firstDay: 1, initialView: 'dayGridMonth',
+        // ZMIANA: Kluczowa zmiana pozwalająca na naturalny wzrost kalendarza i scroll strony
+        height: 'auto', 
+        events: [],
+        displayEventEnd: true,
+        dayMaxEventRows: getDayMax(),
+        fixedWeekCount: false,
+        showNonCurrentDates: true, // Zmienione na true, bo CSS je styluje, a to lepsze dla nawigacji
+        moreLinkClick: 'popover',
+        allDaySlot: false,
+        handleWindowResize: false, // Kontrolujemy resize ręcznie
+        slotDuration: '00:15:00',
+        slotLabelInterval: '01:00:00',
+        slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+        slotMinTime: '08:00:00',
+        slotMaxTime: '21:30:00',
+        expandRows: true,
+        nowIndicator: true,
+        eventContent: arg => {
+          const e = arg.event.extendedProps;
+          const time = (e.startTime && e.endTime) ? `${e.startTime}–${e.endTime}` : '';
+          const title = (arg.event.title || '').trim();
+          const html = `<div class="evt"><span class="t">${escapeHtml(title)}</span>${time ? `<span class="tm">${time}</span>`:''}</div>`;
+          return { html };
+        },
+        eventDidMount: info => {
+          info.el.addEventListener('mouseenter', ()=> showTooltip(info.el, buildTooltipHtml(info.event.extendedProps, info.event.classNames.includes('remote'))));
+          info.el.addEventListener('mouseleave', hideTooltip);
+        },
+        datesSet: () => { 
+          applyFilters(); 
+          handleResize(); 
+        },
+      });
+      fc.render();
+    }
+    
+    function buildTooltipHtml(e, isRemote){
+      const rows = [];
+      const addRow = (label, value) => {
+        if(value) rows.push(`<div class="tt-row"><span>${label}:</span><b>${escapeHtml(value)}</b></div>`);
+      };
+
+      if(e.title) rows.push(`<div class="tt-title">${escapeHtml(e.title)}</div>`);
+      addRow('Data', e.date);
+      addRow('Godziny', e.startTime && e.endTime ? `${e.startTime}–${e.endTime}` : e.startTime);
+      addRow('Program', e.program);
+      addRow('Typ', e.type);
+      addRow('Sala', e.location);
+      addRow('Prowadzący', e.lecturers?.join(', '));
+      addRow('Zjazd', e.zjazd);
+      
+      if(isRemote) rows.push(`<div class="tt-badge tt-remote">Zajęcia zdalne</div>`);
+      return rows.join('');
+    }
+
+    function escapeHtml(str){
+      return String(str||'').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+    }
+
+    function showTooltip(el, html){
+      if (!html) return;
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      requestAnimationFrame(() => {
+        tooltip.style.opacity = '1';
+        const rect = el.getBoundingClientRect();
+        const pad = 8;
+        
+        let left = rect.left + (rect.width/2) - (tooltip.offsetWidth/2);
+        left = Math.max(10, Math.min(left, window.innerWidth - tooltip.offsetWidth - 10));
+        
+        let top = rect.top - tooltip.offsetHeight - pad;
+        if(top < 10){ top = rect.bottom + pad; }
+        
+        tooltip.style.transform = `translate(${left}px, ${top}px)`;
+      });
+    }
+
+    function hideTooltip(){ 
+      tooltip.style.opacity = '0';
+      // Czekamy na koniec animacji zanim ukryjemy element
+      setTimeout(() => {
+        if (tooltip.style.opacity === '0') {
+          tooltip.style.display = 'none';
+        }
+      }, 150);
+    }
+    
+    // ZMIANA: Ustawienie transform zamiast top/left dla płynniejszej animacji i wydajności
+    tooltip.style.top = '0';
+    tooltip.style.left = '0';
+
+    let lastFiltered = [];
+    let nextTimerId;
+
+    const nextEls = {
+      card: null, status: null, badge: null, title: null, range: null, room: null, bar: null
+    };
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      nextEls.card = document.getElementById('nextCard');
+      nextEls.status = document.getElementById('nextStatus');
+      nextEls.badge = document.getElementById('nextBadge');
+      nextEls.title = document.getElementById('nextTitle');
+      nextEls.range = document.getElementById('nextRange');
+      nextEls.room = document.getElementById('nextRoom');
+      nextEls.bar = document.getElementById('nextProgress');
+    });
+
+    function humanizeMinutes(mins){
+      const m = Math.max(0, Math.round(mins));
+      const d = Math.floor(m / 1440);
+      const h = Math.floor((m % 1440) / 60);
+      const mm = m % 60;
+      if(d>0 && h>0) return `${d} d ${h} h`;
+      if(d>0) return `${d} d`;
+      if(h>0 && mm>0) return `${h} h ${mm} min`;
+      if(h>0) return `${h} h`;
+      return `${mm} min`;
+    }
+
+    function fmtHM(d){ return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+    function ensureEndISO(ev){
+      if(ev.end) return ev.end;
+      // domyślnie +60 min gdy brak końca
+      const d = new Date(ev.start);
+      d.setMinutes(d.getMinutes()+60);
+      return d.toISOString();
+    }
+
+    function pickNextOrCurrent(events){
+      const now = new Date();
+      const enriched = events
+        .filter(e=>e.start)
+        .map(e=>({
+          e,
+          start: new Date(e.start),
+          end: new Date(ensureEndISO(e))
+        }))
+        .filter(x=>!isNaN(x.start) && !isNaN(x.end))
+        .sort((a,b)=> a.start - b.start);
+
+      const ongoing = enriched.filter(x=> now >= x.start && now < x.end)
+                              .sort((a,b)=> a.end - b.end);
+      if(ongoing.length) return { kind:'ongoing', ...ongoing[0] };
+
+      const upcoming = enriched.filter(x=> x.start > now);
+      if(upcoming.length) return { kind:'upcoming', ...upcoming[0] };
+
+      return null;
+    }
+
+    function updateNextTile(){
+      if(!nextEls.card) return;
+      const pick = pickNextOrCurrent(lastFiltered);
+      if(!pick){
+        nextEls.card.classList.remove('remote');
+        nextEls.status.textContent = 'Brak nadchodzących zajęć';
+        nextEls.badge.style.display = 'none';
+        nextEls.title.textContent = '—';
+        nextEls.range.textContent = '—';
+        nextEls.room.textContent = '';
+        nextEls.bar.style.width = '0%';
+        nextEls.bar.parentElement.setAttribute('aria-valuenow','0');
+        return;
+      }
+
+      const { e, start, end, kind } = pick;
+      const isRemote = (e.classNames||[]).includes('remote');
+      nextEls.card.classList.toggle('remote', isRemote);
+      nextEls.badge.style.display = isRemote ? '' : 'none';
+
+      // Tytuł, godziny, sala
+      nextEls.title.textContent = (e.title||'Zajęcia');
+      nextEls.range.textContent = `${fmtHM(start)}–${fmtHM(end)}`;
+      nextEls.room.textContent = e.location ? `• ${e.location}` : (isRemote ? '• Zdalnie' : '');
+
+      const totalMin = (end - start)/60000;
+      const leftToStart = (start - new Date())/60000;
+
+      if(kind==='ongoing'){
+        const elapsed = (new Date() - start)/60000;
+        const pct = Math.max(0, Math.min(100, (elapsed/totalMin)*100));
+        nextEls.status.textContent = `Trwają · do końca ${humanizeMinutes(totalMin - elapsed)}`;
+        nextEls.bar.style.width = pct.toFixed(1)+'%';
+        nextEls.bar.parentElement.setAttribute('aria-valuenow', String(Math.round(pct)));
+      }else{
+        nextEls.status.textContent = `Następne za ${humanizeMinutes(leftToStart)}`;
+        nextEls.bar.style.width = '0%';
+        nextEls.bar.parentElement.setAttribute('aria-valuenow','0');
+      }
+    }
+
+    function startNextTimer(){
+      clearInterval(nextTimerId);
+      nextTimerId = setInterval(updateNextTile, 30000); // odświeżaj co 30s
+    }
+
+
+
+    function applyFilters(){
+      const fProg = filterElements.program.value;
+      const fType = filterElements.type.value;
+      const fRoom = filterElements.room.value;
+
+      const filtered = rawData.events.filter(ev => {
+        if(fProg && ev.program !== fProg) return false;
+        if(fType && ev.type !== fType) return false;
+        if(fRoom && ev.location !== fRoom) return false;
+        return true;
+      });
+
+      lastFiltered = filtered; // zapisz aktualnie przefiltrowane wydarzenia
+
+      fc.removeAllEvents();
+      fc.addEventSource(filtered.map(e => ({
+        title: e.title || (e.raw||'').slice(0,60),
+        start: e.start,
+        end: e.end,
+        classNames: e.classNames,
+        extendedProps: e,
+      })));
+
+      statElements.visible.textContent = filtered.length;
+      updateNextTile();
+      startNextTimer();
+    }
+
+    // Pomocnicze funkcje dla ICS
+    function addMinutesLocalIso(dtStr, minutes){
+      const d = new Date(dtStr);
+      d.setMinutes(d.getMinutes() + (minutes||0));
+      return d.toISOString();
+    }
+
+    function icsEscape(str){
+      return String(str||'')
+        .replace(/\\/g,'\\\\')
+        .replace(/\n/g,'\\n')
+        .replace(/,/g,'\\,')
+        .replace(/;/g,'\\;');
+    }
+
+    function simpleHash(s){
+      let h = 0; 
+      for(let i=0;i<s.length;i++){ 
+        h = ((h<<5) - h) + s.charCodeAt(i); 
+        h |= 0; 
+      }
+      return Math.abs(h).toString(36);
+    }
+
+    // Pomocnicze: składanie linii ICS do 75 znaków (RFC 5545)
+    function foldIcsLine(line){
+      const maxLen = 75;
+      if(line.length <= maxLen) return line;
+      let out = '';
+      for(let i=0; i<line.length; i+=maxLen){
+        const chunk = line.slice(i, i+maxLen);
+        out += (i===0 ? chunk : `\r\n ${chunk}`);
+      }
+      return out;
+    }
+    function foldIcs(lines){ return lines.map(foldIcsLine).join('\r\n'); }
+
+    // Format daty w UTC do ICS: YYYYMMDDTHHMMSSZ
+    function toIcsUtc(dt){
+      const d = (dt instanceof Date) ? dt : new Date(dt);
+      const y = d.getUTCFullYear();
+      const M = String(d.getUTCMonth()+1).padStart(2,'0');
+      const D = String(d.getUTCDate()).padStart(2,'0');
+      const h = String(d.getUTCHours()).padStart(2,'0');
+      const m = String(d.getUTCMinutes()).padStart(2,'0');
+      const s = String(d.getUTCSeconds()).padStart(2,'0');
+      return `${y}${M}${D}T${h}${m}${s}Z`;
+    }
+
+    function buildICS(events){
+      const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//MUP Harmonogram//PL',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH'
+      ];
+      const stamp = toIcsUtc(new Date());
+      events.forEach((e)=>{
+        if(!e.start) return; // wymagany DTSTART
+        const startUtc = toIcsUtc(e.start);
+        const endUtc = toIcsUtc(e.end || addMinutesLocalIso(e.start, 60));
+        const title = icsEscape(e.title || 'Zajęcia');
+        const lecturers = (e.lecturers && e.lecturers.length) ? `Prowadzący: ${e.lecturers.join(', ')}` : '';
+        const parts = [
+          e.program ? `Program: ${e.program}` : '',
+          e.type ? `Typ: ${e.type}` : '',
+          e.location ? `Sala: ${e.location}` : ((e.classNames||[]).includes('remote') ? 'Zdalnie' : ''),
+          lecturers,
+          e.zjazd ? `Zjazd: ${e.zjazd}` : '',
+        ].filter(Boolean);
+        const desc = icsEscape(parts.join('\n'));
+        const loc = icsEscape(e.location || ((e.classNames||[]).includes('remote') ? 'Zdalnie' : ''));
+        const uid = simpleHash(`${e.start}|${e.end}|${e.title||''}|${e.location||''}`) + '@mup';
+
+        lines.push('BEGIN:VEVENT');
+        if(stamp) lines.push(`DTSTAMP:${stamp}`);
+        lines.push(`UID:${uid}`);
+        lines.push(`DTSTART:${startUtc}`);
+        if(endUtc) lines.push(`DTEND:${endUtc}`);
+        lines.push(`SUMMARY:${title}`);
+        if(desc) lines.push(`DESCRIPTION:${desc}`);
+        if(loc) lines.push(`LOCATION:${loc}`);
+        lines.push('END:VEVENT');
+      });
+      lines.push('END:VCALENDAR');
+      return foldIcs(lines) + '\r\n';
+    }
+
+    function exportToGoogleCalendar(){
+      const events = lastFiltered || [];
+      const btn = document.getElementById('exportGoogle');
+      if(!events.length){
+        if(btn){ btn.classList.add('shiver'); setTimeout(()=>btn.classList.remove('shiver'), 300); }
+        return;
+      }
+      try{
+        const ics = buildICS(events);
+        const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'harmonogram_przefiltrowany.ics';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // opóźnij revoke, by uniknąć anulowania pobrania w niektórych przeglądarkach
+        setTimeout(()=> URL.revokeObjectURL(url), 2000);
+      }catch(err){
+        console.error('Eksport ICS nie powiódł się', err);
+        if(btn){ btn.classList.add('shiver'); setTimeout(()=>btn.classList.remove('shiver'), 600); }
+      }
+    }
+
+    // Podpięcie przycisku eksportu
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const exportBtn = document.getElementById('exportGoogle');
+      if(exportBtn){ exportBtn.addEventListener('click', exportToGoogleCalendar); }
+    });
+
+    // Rejestracja Service Workera (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch(err => {
+          console.warn('SW registration failed', err);
+        });
+      });
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
