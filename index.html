@@ -387,7 +387,7 @@
 
     async function loadData() {
       try {
-        const res = await fetch('/harmonogram.json', { cache: 'no-store' });
+        const res = await fetch('./harmonogram.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         rawData = await res.json();
         rawData.events = (rawData.events || []).map(e => normalizeEvent(e));
