@@ -1,16 +1,15 @@
-const CACHE_NAME = 'mup-cache-v1';
+const CACHE_NAME = 'mup-cache-v3';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './service-worker.js',
-  '../harmonogram.json',
+  './logo.png',
+  './harmonogram.json',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.css',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js',
-  'https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
+  'https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js'
 ];
 
 self.addEventListener('install', (event) => {
