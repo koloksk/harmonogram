@@ -508,7 +508,6 @@
       fill: transparent;
       stroke: transparent;
       stroke-width: 2;
-      cursor: pointer;
       transition: all 0.3s ease;
     }
     .building-area:hover{
@@ -555,15 +554,488 @@
         margin-right: auto;
       }
     }
+
+    /* Przycisk pomocy */
+    .help-btn{
+      background: linear-gradient(180deg, #1a2447 0%, #0f1a3d 100%);
+      border: 1px solid #2a335a;
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      padding: 0;
+    }
+    .help-btn:hover{
+      background: linear-gradient(180deg, #22305d 0%, #162244 100%);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .help-btn svg{
+      display: block;
+    }
+
+    /* Modal */
+    .modal-overlay{
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.active{
+      display: flex;
+    }
+    @keyframes fadeIn{
+      from{ opacity: 0; }
+      to{ opacity: 1; }
+    }
+    .modal{
+      background: linear-gradient(180deg, #0d1430 0%, #0b1026 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 85vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes slideUp{
+      from{ opacity: 0; transform: translateY(20px); }
+      to{ opacity: 1; transform: translateY(0); }
+    }
+    .modal-header{
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, #1a2447 0%, #0f1a3d 100%);
+    }
+    .modal-title{
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-close{
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: all 0.2s;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .modal-close:hover{
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--accent);
+    }
+    .modal-body{
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-body::-webkit-scrollbar{
+      width: 8px;
+    }
+    .modal-body::-webkit-scrollbar-track{
+      background: rgba(15,21,43,0.3);
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb{
+      background: rgba(124,156,255,0.3);
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover{
+      background: rgba(124,156,255,0.5);
+    }
+
+    /* Lista harmonogramów */
+    .schedule-list{
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .schedule-item{
+      background: #0c1330;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .schedule-item:hover{
+      border-color: var(--accent);
+      transform: translateX(2px);
+    }
+    .schedule-item.active{
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(124,156,255,0.08) 0%, rgba(124,156,255,0.02) 100%);
+    }
+    .schedule-item.active::before{
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent);
+    }
+    .schedule-header{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .schedule-name{
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+    .schedule-path{
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      word-break: break-all;
+    }
+    .schedule-status{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .schedule-status.success{
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .schedule-status.error{
+      background: rgba(255, 90, 90, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(255, 90, 90, 0.3);
+    }
+    .schedule-status.warning{
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .status-dot{
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .schedule-meta{
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .schedule-meta-item{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .schedule-meta-item strong{
+      color: var(--text);
+      font-weight: 600;
+    }
+    .schedule-actions{
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .schedule-btn{
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    .schedule-btn.primary{
+      background: var(--accent);
+      color: #0a0f21;
+      border-color: var(--accent);
+    }
+    .schedule-btn.primary:hover{
+      background: #5a7ee6;
+      transform: translateY(-1px);
+    }
+    .schedule-btn.secondary{
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .schedule-btn.secondary:hover{
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--accent);
+    }
+    .schedule-btn.danger{
+      background: transparent;
+      color: var(--danger);
+      border-color: rgba(255, 90, 90, 0.3);
+    }
+    .schedule-btn.danger:hover{
+      background: rgba(255, 90, 90, 0.1);
+    }
+
+    /* Przycisk dodawania */
+    .add-schedule-section{
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+    .add-schedule-title{
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 12px 0;
+    }
+
+    /* Sekcja O aplikacji */
+    .about-section{
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+    .about-title{
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .about-content{
+      background: #0c1330;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .about-item{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .about-item:last-of-type{
+      border-bottom: none;
+    }
+    .about-label{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .about-value{
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+      text-align: right;
+    }
+    .about-links{
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .about-link{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, #1a2447 0%, #0f1a3d 100%);
+      border: 1px solid #2a335a;
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .about-link:hover{
+      background: linear-gradient(180deg, #22305d 0%, #162244 100%);
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+    .about-link svg:first-child{
+      flex-shrink: 0;
+    }
+    .about-link span{
+      flex: 1;
+    }
+    .file-input-wrapper{
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .file-input-label{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      background: linear-gradient(180deg, #1a2447 0%, #0f1a3d 100%);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .file-input-label:hover{
+      border-color: var(--accent);
+      background: linear-gradient(180deg, #22305d 0%, #162244 100%);
+      transform: translateY(-1px);
+    }
+    .file-input{
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .upload-icon{
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Empty state */
+    .empty-state{
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty-state svg{
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      opacity: 0.5;
+    }
+    .empty-state h3{
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 8px 0;
+    }
+    .empty-state p{
+      font-size: 14px;
+      margin: 0;
+    }
+
+    @media (max-width: 700px){
+      .modal{
+        max-height: 90vh;
+      }
+      .modal-header{
+        padding: 16px 20px;
+      }
+      .modal-title{
+        font-size: 16px;
+      }
+      .modal-body{
+        padding: 16px 20px;
+      }
+      .schedule-item{
+        padding: 12px;
+      }
+      .schedule-header{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .schedule-meta{
+        flex-direction: column;
+        gap: 8px;
+      }
+      .schedule-actions{
+        flex-direction: column;
+      }
+      .schedule-btn{
+        width: 100%;
+      }
+      .about-item{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 12px 0;
+      }
+      .about-value{
+        text-align: left;
+      }
+      .about-link{
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+    }
+    @media (max-width: 480px){
+      .help-btn{
+        width: 32px;
+        height: 32px;
+      }
+      .help-btn svg{
+        width: 18px;
+        height: 18px;
+      }
+      header h1{
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Harmonogram</h1>
-    <div class="seg">
-      <button id="viewMonth" aria-pressed="true" data-view="dayGridMonth">Miesiąc</button>
-      <button id="viewWeek" aria-pressed="false" data-view="timeGridWeek">Tydzień</button>
-      <button id="viewDay" aria-pressed="false" data-view="timeGridDay">Dzień</button>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="seg">
+        <button id="viewMonth" aria-pressed="true" data-view="dayGridMonth">Miesiąc</button>
+        <button id="viewWeek" aria-pressed="false" data-view="timeGridWeek">Tydzień</button>
+        <button id="viewDay" aria-pressed="false" data-view="timeGridDay">Dzień</button>
+      </div>
+      <button id="helpBtn" class="help-btn" title="Zarządzaj harmonogramami" aria-label="Zarządzaj harmonogramami">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -672,6 +1144,94 @@
 
   <div id="tooltip" class="tooltip" style="display:none; opacity: 0;"></div>
 
+  <!-- Modal zarządzania harmonogramami -->
+  <div id="scheduleModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Zarządzaj harmonogramami
+        </h2>
+        <button class="modal-close" id="modalClose" aria-label="Zamknij">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="scheduleListContainer"></div>
+        
+        <div class="add-schedule-section">
+          <h3 class="add-schedule-title">Dodaj nowy harmonogram</h3>
+          <div class="file-input-wrapper">
+            <label for="fileInput" class="file-input-label">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>Wybierz plik JSON</span>
+            </label>
+            <input type="file" id="fileInput" class="file-input" accept=".json" />
+          </div>
+        </div>
+
+        <!-- O aplikacji -->
+        <div class="about-section">
+          <h3 class="about-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            O aplikacji
+          </h3>
+          <div class="about-content">
+            <div class="about-item">
+              <div class="about-label">Wersja</div>
+              <div class="about-value">1.0.0</div>
+            </div>
+            <div class="about-item">
+              <div class="about-label">Autor</div>
+              <div class="about-value">koloksk</div>
+            </div>
+            <div class="about-item">
+              <div class="about-label">Technologie</div>
+              <div class="about-value">HTML • CSS • JavaScript • FullCalendar</div>
+            </div>
+            <div class="about-links">
+              <a href="https://github.com/koloksk/harmonogram" target="_blank" rel="noopener noreferrer" class="about-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <span>Kod źródłowy</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5;">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+              <a href="https://github.com/koloksk/harmonogram/issues" target="_blank" rel="noopener noreferrer" class="about-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Zgłoś problem</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5;">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
@@ -693,8 +1253,296 @@
     const tooltip = document.getElementById('tooltip');
     
     const STORAGE_KEY = 'harm_filters_v1';
+    const SCHEDULES_STORAGE_KEY = 'harm_schedules_v1';
+    const ACTIVE_SCHEDULE_KEY = 'harm_active_schedule_v1';
+    
     let rawData = { events: [] };
     let fc;
+    let schedules = [];
+    let activeScheduleId = null;
+
+    // ===== SYSTEM ZARZĄDZANIA HARMONOGRAMAMI =====
+    
+    function loadSchedulesFromStorage(){
+      try{
+        const stored = localStorage.getItem(SCHEDULES_STORAGE_KEY);
+        schedules = stored ? JSON.parse(stored) : [];
+        activeScheduleId = localStorage.getItem(ACTIVE_SCHEDULE_KEY) || null;
+        
+        // Dodaj domyślny harmonogram jeśli nie ma żadnych
+        if(schedules.length === 0){
+          schedules.push({
+            id: 'default',
+            name: 'Harmonogram główny',
+            path: './harmonogram.json',
+            isDefault: true,
+            addedAt: new Date().toISOString(),
+            status: 'unknown',
+            eventsCount: 0,
+            errors: []
+          });
+          activeScheduleId = 'default';
+          saveSchedulesToStorage();
+        }
+      }catch(e){
+        console.error('Błąd wczytywania harmonogramów', e);
+        schedules = [];
+      }
+    }
+
+    function saveSchedulesToStorage(){
+      try{
+        localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(schedules));
+        if(activeScheduleId){
+          localStorage.setItem(ACTIVE_SCHEDULE_KEY, activeScheduleId);
+        }
+      }catch(e){
+        console.error('Błąd zapisywania harmonogramów', e);
+      }
+    }
+
+    function getActiveSchedule(){
+      return schedules.find(s => s.id === activeScheduleId) || schedules[0];
+    }
+
+    async function validateScheduleFile(data, scheduleName){
+      const errors = [];
+      const warnings = [];
+      
+      if(!data || typeof data !== 'object'){
+        errors.push('Nieprawidłowy format pliku JSON');
+        return { valid: false, errors, warnings, eventsCount: 0 };
+      }
+      
+      if(!Array.isArray(data.events)){
+        errors.push('Brak tablicy "events" w pliku');
+        return { valid: false, errors, warnings, eventsCount: 0 };
+      }
+      
+      const eventsCount = data.events.length;
+      
+      if(eventsCount === 0){
+        warnings.push('Plik nie zawiera żadnych wydarzeń');
+      }
+      
+      // Walidacja struktury wydarzeń
+      let invalidEvents = 0;
+      data.events.forEach((e, idx) => {
+        if(!e.date && !e.start){
+          invalidEvents++;
+        }
+      });
+      
+      if(invalidEvents > 0){
+        warnings.push(`${invalidEvents} wydarzeń nie ma daty`);
+      }
+      
+      return {
+        valid: errors.length === 0,
+        errors,
+        warnings,
+        eventsCount
+      };
+    }
+
+    async function addScheduleFromFile(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try{
+            const data = JSON.parse(e.target.result);
+            const validation = await validateScheduleFile(data, file.name);
+            
+            const newSchedule = {
+              id: 'custom_' + Date.now(),
+              name: file.name.replace('.json', ''),
+              path: null, // Custom file, stored in data
+              data: data, // Store data directly
+              isDefault: false,
+              addedAt: new Date().toISOString(),
+              status: validation.valid ? 'success' : (validation.errors.length > 0 ? 'error' : 'warning'),
+              eventsCount: validation.eventsCount,
+              errors: validation.errors,
+              warnings: validation.warnings || []
+            };
+            
+            schedules.push(newSchedule);
+            saveSchedulesToStorage();
+            renderScheduleList();
+            resolve(newSchedule);
+          }catch(err){
+            reject(new Error('Nieprawidłowy format pliku JSON: ' + err.message));
+          }
+        };
+        reader.onerror = () => reject(new Error('Błąd wczytywania pliku'));
+        reader.readAsText(file);
+      });
+    }
+
+    function deleteSchedule(scheduleId){
+      if(schedules.find(s => s.id === scheduleId)?.isDefault){
+        alert('Nie można usunąć domyślnego harmonogramu');
+        return;
+      }
+      
+      schedules = schedules.filter(s => s.id !== scheduleId);
+      
+      if(activeScheduleId === scheduleId){
+        activeScheduleId = schedules[0]?.id || null;
+        loadData(); // Reload with new active schedule
+      }
+      
+      saveSchedulesToStorage();
+      renderScheduleList();
+    }
+
+    function switchSchedule(scheduleId){
+      activeScheduleId = scheduleId;
+      saveSchedulesToStorage();
+      loadData(); // Reload calendar with new schedule
+      renderScheduleList();
+    }
+
+    function renderScheduleList(){
+      const container = document.getElementById('scheduleListContainer');
+      
+      if(schedules.length === 0){
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <h3>Brak harmonogramów</h3>
+            <p>Dodaj swój pierwszy harmonogram poniżej</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const html = `
+        <div class="schedule-list">
+          ${schedules.map(schedule => {
+            const isActive = schedule.id === activeScheduleId;
+            const statusClass = schedule.status === 'success' ? 'success' : 
+                               schedule.status === 'error' ? 'error' : 'warning';
+            const statusText = schedule.status === 'success' ? 'OK' : 
+                              schedule.status === 'error' ? 'Błąd' : 'Ostrzeżenie';
+            
+            return `
+              <div class="schedule-item ${isActive ? 'active' : ''}" data-schedule-id="${schedule.id}">
+                <div class="schedule-header">
+                  <div>
+                    <h3 class="schedule-name">
+                      ${escapeHtml(schedule.name)}
+                      ${isActive ? ' <span style="color: var(--accent); font-size: 12px;">● Aktywny</span>' : ''}
+                    </h3>
+                    ${schedule.path ? `<div class="schedule-path">${escapeHtml(schedule.path)}</div>` : '<div class="schedule-path">Plik własny</div>'}
+                  </div>
+                  <div class="schedule-status ${statusClass}">
+                    <span class="status-dot"></span>
+                    ${statusText}
+                  </div>
+                </div>
+                
+                <div class="schedule-meta">
+                  <div class="schedule-meta-item">
+                    <span>📊 Wydarzenia:</span>
+                    <strong>${schedule.eventsCount}</strong>
+                  </div>
+                  <div class="schedule-meta-item">
+                    <span>📅 Dodano:</span>
+                    <strong>${new Date(schedule.addedAt).toLocaleDateString('pl-PL')}</strong>
+                  </div>
+                  ${schedule.errors && schedule.errors.length > 0 ? `
+                    <div class="schedule-meta-item" style="color: var(--danger);">
+                      <span>⚠️ Błędy:</span>
+                      <strong>${schedule.errors.length}</strong>
+                    </div>
+                  ` : ''}
+                  ${schedule.warnings && schedule.warnings.length > 0 ? `
+                    <div class="schedule-meta-item" style="color: #fbbf24;">
+                      <span>⚠️ Ostrzeżenia:</span>
+                      <strong>${schedule.warnings.length}</strong>
+                    </div>
+                  ` : ''}
+                </div>
+                
+                ${schedule.errors && schedule.errors.length > 0 ? `
+                  <div style="margin-top: 10px; padding: 10px; background: rgba(255,90,90,0.1); border-radius: 8px; font-size: 12px; color: var(--danger);">
+                    ${schedule.errors.map(e => `• ${escapeHtml(e)}`).join('<br>')}
+                  </div>
+                ` : ''}
+                
+                ${schedule.warnings && schedule.warnings.length > 0 ? `
+                  <div style="margin-top: 10px; padding: 10px; background: rgba(251,191,36,0.1); border-radius: 8px; font-size: 12px; color: #fbbf24;">
+                    ${schedule.warnings.map(w => `• ${escapeHtml(w)}`).join('<br>')}
+                  </div>
+                ` : ''}
+                
+                <div class="schedule-actions">
+                  ${!isActive ? `<button class="schedule-btn primary" onclick="switchSchedule('${schedule.id}')">Aktywuj</button>` : ''}
+                  ${!schedule.isDefault ? `<button class="schedule-btn danger" onclick="confirmDeleteSchedule('${schedule.id}')">Usuń</button>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    function confirmDeleteSchedule(scheduleId){
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if(confirm(`Czy na pewno chcesz usunąć harmonogram "${schedule.name}"?`)){
+        deleteSchedule(scheduleId);
+      }
+    }
+
+    // Modal controls
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('scheduleModal');
+      const helpBtn = document.getElementById('helpBtn');
+      const modalClose = document.getElementById('modalClose');
+      const fileInput = document.getElementById('fileInput');
+      
+      helpBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        renderScheduleList();
+      });
+      
+      modalClose.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if(e.target === modal){
+          modal.classList.remove('active');
+        }
+      });
+      
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        
+        try{
+          await addScheduleFromFile(file);
+          alert('✅ Harmonogram dodany pomyślnie!');
+          fileInput.value = ''; // Reset input
+        }catch(err){
+          alert('❌ ' + err.message);
+        }
+      });
+    });
+    
+    // Make functions global
+    window.switchSchedule = switchSchedule;
+    window.confirmDeleteSchedule = confirmDeleteSchedule;
+    
+    // ===== KONIEC SYSTEMU ZARZĄDZANIA =====
 
     // Funkcja do dynamicznego dostosowywania widoku
     function getDayMax(){
@@ -719,10 +1567,34 @@
 
     async function loadData() {
       try {
-        const res = await fetch('./harmonogram.json', { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        rawData = await res.json();
+        loadSchedulesFromStorage();
+        const activeSchedule = getActiveSchedule();
+        
+        if(!activeSchedule){
+          throw new Error('Brak aktywnego harmonogramu');
+        }
+        
+        // Load from stored data or fetch from path
+        if(activeSchedule.data){
+          rawData = activeSchedule.data;
+        } else {
+          const res = await fetch(activeSchedule.path, { cache: 'no-store' });
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          rawData = await res.json();
+        }
+        
         rawData.events = (rawData.events || []).map(e => normalizeEvent(e));
+        
+        // Update schedule status
+        const validation = await validateScheduleFile(rawData, activeSchedule.name);
+        const scheduleIndex = schedules.findIndex(s => s.id === activeSchedule.id);
+        if(scheduleIndex !== -1){
+          schedules[scheduleIndex].status = validation.valid ? 'success' : (validation.errors.length > 0 ? 'error' : 'warning');
+          schedules[scheduleIndex].eventsCount = validation.eventsCount;
+          schedules[scheduleIndex].errors = validation.errors;
+          schedules[scheduleIndex].warnings = validation.warnings || [];
+          saveSchedulesToStorage();
+        }
         
         statElements.total.textContent = rawData.events.length;
         initFilters(rawData.events);
@@ -731,7 +1603,7 @@
         handleResize();
       } catch (error) {
         console.error("Nie udało się załadować danych:", error);
-        calendarEl.innerHTML = `<p style="color: var(--danger); text-align: center; padding: 20px;">Błąd ładowania harmonogramu. Sprawdź konsolę, aby uzyskać więcej informacji.</p>`;
+        calendarEl.innerHTML = `<p style="color: var(--danger); text-align: center; padding: 20px;">Błąd ładowania harmonogramu: ${error.message}<br><br>Kliknij przycisk ? aby zarządzać harmonogramami.</p>`;
       }
     }
 
@@ -1216,38 +2088,6 @@
         
         building.addEventListener('mouseleave', () => {
           label.classList.remove('visible');
-        });
-        
-        building.addEventListener('click', () => {
-          const buildingCode = code.toUpperCase();
-          const buildingName = building.dataset.name;
-          
-          console.log(`Kliknięto budynek: ${buildingName} (${buildingCode})`);
-          
-          // Filtrowanie sal według budynku
-          const roomSelect = filterElements.room;
-          if(roomSelect){
-            let foundRoom = null;
-            for(const option of roomSelect.options){
-              if(option.value && option.value.includes(buildingCode)){
-                foundRoom = option.value;
-                break;
-              }
-            }
-            
-            if(foundRoom){
-              roomSelect.value = foundRoom;
-              saveFilters();
-              applyFilters();
-              
-              // Scroll do kalendarza na desktopie
-              if(window.innerWidth > 900){
-                document.getElementById('calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            } else {
-              console.log(`Brak sal w budynku ${buildingCode}`);
-            }
-          }
         });
       });
     }
