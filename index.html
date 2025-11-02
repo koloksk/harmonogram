@@ -101,8 +101,8 @@
     .fc .fc-button-primary:not(:disabled).fc-button-active{background:linear-gradient(180deg, var(--accent) 0%, #5a7ee6 100%); color:#fff; border-color:var(--accent)}
     .fc-theme-standard .fc-scrollgrid{border:1px solid var(--border); border-radius:12px; overflow:hidden}
     .fc .fc-daygrid-day, .fc .fc-timegrid-slot{background:#0f152b}
-    .fc .fc-daygrid-day-number{color:var(--muted); font-weight:600; font-size:14px; padding:8px}
-    .fc .fc-col-header-cell{background:linear-gradient(180deg, #0d1430 0%, #0b1026 100%); border-color:var(--border); font-weight:700; color:var(--text); padding:12px 4px}
+    .fc .fc-daygrid-day-number{color:var(--muted); font-weight:600; font-size:13px; padding:6px}
+    .fc .fc-col-header-cell{background:linear-gradient(180deg, #0d1430 0%, #0b1026 100%); border-color:var(--border); font-weight:700; color:var(--text); padding:10px 4px; font-size:13px}
     .fc .fc-daygrid-day.fc-day-today{background:rgba(124,156,255,0.08)}
     .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{color:var(--accent); font-weight:700}
     
@@ -120,14 +120,14 @@
       box-shadow: 0 4px 12px rgba(124,156,255,0.3);
       border-color:rgba(124,156,255,0.5);
     }
-    .fc .fc-daygrid-event{padding:6px 10px; min-height:32px}
+    .fc .fc-daygrid-event{padding:5px 8px; min-height:28px}
     .fc .fc-timegrid-event .fc-event-main{display:flex; align-items:center; justify-content:center; padding:6px 10px; height:100%}
     .fc .fc-daygrid-event .evt, .fc .fc-timegrid-event .evt{
       display:flex; 
       flex-direction:column; 
       align-items:center; 
       justify-content:center; 
-      gap:3px; 
+      gap:2px; 
       min-width:0; 
       line-height:1.3; 
       text-align:center; 
@@ -140,8 +140,8 @@
       font-size:14px; 
       color:#e8ecf1;
       white-space:normal; 
-      overflow:visible; 
-      text-overflow:clip; 
+      overflow:hidden; 
+      text-overflow:ellipsis; 
       word-break:break-word;
       display:-webkit-box; 
       -webkit-box-orient:vertical; 
@@ -149,6 +149,12 @@
       line-clamp:3;
     }
     .fc .fc-daygrid-event .tm, .fc .fc-timegrid-event .tm{font-size:12px; color:#b8c5ff; font-weight:600}
+    
+    /* Kompaktowy widok komórek na mobile */
+    @media (max-width: 900px){
+      .fc .fc-daygrid-body{font-size:0.9em}
+      .fc .fc-scrollgrid{font-size:inherit}
+    }
     
     /* Wydarzenia zdalne - czerwony gradient */
     .fc .fc-daygrid-event.remote, .fc .fc-timegrid-event.remote{
@@ -213,25 +219,82 @@
       .fc .fc-toolbar-chunk{margin:4px 0}
     }
     @media (max-width: 700px){
-      .fc .fc-toolbar-title{font-size:16px}
-      .fc .fc-button{padding:6px 10px; font-size:12px}
-      .fc .fc-daygrid-event{padding:5px 8px; min-height:28px}
-      .fc .fc-daygrid-event .evt{gap:2px}
-      .fc .fc-daygrid-event .t{font-size:13px; -webkit-line-clamp:2; line-clamp:2}
-      .fc .fc-daygrid-event .tm{font-size:11px}
-      .fc .fc-daygrid-day-number{font-size:13px; padding:6px}
-      .fc .fc-col-header-cell{padding:8px 2px; font-size:12px}
+      .fc .fc-toolbar-title{font-size:15px}
+      .fc .fc-button{padding:5px 8px; font-size:11px}
+      .fc .fc-daygrid-event{padding:3px 5px; min-height:auto; margin:1px 0}
+      .fc .fc-daygrid-event .evt{gap:0px; align-items:flex-start; text-align:left}
+      .fc .fc-daygrid-event .t{font-size:10px; -webkit-line-clamp:2; line-clamp:2; font-weight:700; line-height:1.3}
+      .fc .fc-daygrid-event .tm{font-size:9px; opacity:0.8}
+      .fc .fc-daygrid-day-number{font-size:11px; padding:3px 5px; font-weight:700}
+      .fc .fc-col-header-cell{padding:5px 2px; font-size:10px}
+      .fc .fc-daygrid-day-frame{min-height:55px !important}
+      .fc .fc-scrollgrid-sync-table{height:auto !important}
+      .fc .fc-daygrid-day-top{padding:2px}
+      
+      /* Widok tygodniowy - kompaktowy */
+      .fc .fc-timegrid-axis{font-size:8px; padding:0 1px; width:30px}
+      .fc .fc-timegrid-slot{height:16px}
+      .fc .fc-timegrid-slot-label{font-size:7px; padding:0 1px; line-height:1}
+      .fc .fc-timegrid-event{padding:1px 2px; margin:0 0.5px; border-width:1px}
+      .fc .fc-timegrid-event .fc-event-main{padding:1px 2px}
+      .fc .fc-timegrid-event .evt{gap:0; align-items:flex-start; text-align:left}
+      .fc .fc-timegrid-event .t{font-size:9px; line-height:1.15; font-weight:700; word-break:break-word; white-space:normal; letter-spacing:-0.01em}
+      .fc .fc-timegrid-event .tm{font-size:7px; opacity:0.8; font-weight:600}
+      .fc .fc-timegrid-col-events{margin:0 0.5px}
+      .fc .fc-timegrid-divider{height:0px; display:none}
+      
+      /* Widok dzienny - ładniejszy na mobile */
+      .fc-timeGridDay-view .fc-timegrid-axis{font-size:10px; padding:0 4px; width:45px}
+      .fc-timeGridDay-view .fc-timegrid-slot{height:35px}
+      .fc-timeGridDay-view .fc-timegrid-slot-label{font-size:10px; padding:2px; line-height:1.2}
+      .fc-timeGridDay-view .fc-timegrid-event{padding:4px 8px; margin:0 2px; border-width:1px; border-radius:8px}
+      .fc-timeGridDay-view .fc-timegrid-event .fc-event-main{padding:4px 8px}
+      .fc-timeGridDay-view .fc-timegrid-event .evt{gap:2px; align-items:center; text-align:center; justify-content:center}
+      .fc-timeGridDay-view .fc-timegrid-event .t{font-size:13px; line-height:1.3; font-weight:700; word-break:break-word; white-space:normal}
+      .fc-timeGridDay-view .fc-timegrid-event .tm{font-size:11px; opacity:0.9; font-weight:600}
+      .fc-timeGridDay-view .fc-timegrid-col-events{margin:0 4px}
     }
     @media (max-width: 480px){
-      header { padding: 10px 12px; }
-      header h1 { font-size: 15px; }
-      .seg button { padding: 6px 8px; font-size: 11px; }
-      .fc .fc-toolbar-title{font-size:14px}
-      .fc .fc-button{padding:5px 8px; font-size:11px}
-      .fc .fc-daygrid-event{padding:4px 6px; min-height:24px}
-      .fc .fc-daygrid-event .t{font-size:12px; font-weight:600}
+      header { padding: 8px 10px; }
+      header h1 { font-size: 14px; }
+      .seg button { padding: 5px 7px; font-size: 10px; }
+      .fc .fc-toolbar{gap:4px}
+      .fc .fc-toolbar-title{font-size:13px}
+      .fc .fc-button{padding:4px 7px; font-size:10px}
+      .fc .fc-daygrid-event{padding:2px 4px; min-height:auto; margin:1px 0}
+      .fc .fc-daygrid-event .evt{gap:0; align-items:flex-start; text-align:left}
+      .fc .fc-daygrid-event .t{font-size:9px; font-weight:700; line-height:1.25; letter-spacing:-0.01em}
       .fc .fc-daygrid-event .tm{display:none}
-      .fc .fc-daygrid-day-number{font-size:12px; padding:4px}
+      .fc .fc-daygrid-day-number{font-size:10px; padding:2px 3px; font-weight:700}
+      .fc .fc-col-header-cell{padding:3px 1px; font-size:9px; font-weight:700}
+      .fc .fc-daygrid-day-frame{min-height:45px !important}
+      .fc .fc-daygrid-day-top{padding:1px}
+      
+      /* Bardzo kompaktowy widok tygodniowy */
+      .fc .fc-timegrid-axis{font-size:7px; padding:0 1px; width:26px}
+      .fc .fc-timegrid-slot{height:14px}
+      .fc .fc-timegrid-slot-label{font-size:6px; padding:0 1px; line-height:1}
+      .fc .fc-timegrid-event{padding:1px 2px; margin:0 0.5px; border-width:0.5px}
+      .fc .fc-timegrid-event .fc-event-main{padding:0 1px}
+      .fc .fc-timegrid-event .evt{gap:0; align-items:flex-start; text-align:left}
+      .fc .fc-timegrid-event .t{font-size:8px; line-height:1.1; font-weight:700; letter-spacing:-0.02em; word-break:break-word; white-space:normal}
+      .fc .fc-timegrid-event .tm{font-size:6px; opacity:0.75; font-weight:600}
+      .fc .fc-timegrid-col-events{margin:0 0.5px}
+      .fc .fc-timegrid-divider{height:0px; display:none}
+      .fc .fc-col-header-cell-cushion{padding:2px 0; font-size:7px}
+      
+      /* Ładniejszy widok dzienny na bardzo małych ekranach */
+      .fc-timeGridDay-view .fc-timegrid-axis{font-size:9px; padding:0 3px; width:38px}
+      .fc-timeGridDay-view .fc-timegrid-slot{height:30px}
+      .fc-timeGridDay-view .fc-timegrid-slot-label{font-size:9px; padding:1px; line-height:1.1}
+      .fc-timeGridDay-view .fc-timegrid-event{padding:3px 6px; margin:0 2px; border-width:1px; border-radius:6px}
+      .fc-timeGridDay-view .fc-timegrid-event .fc-event-main{padding:3px 6px}
+      .fc-timeGridDay-view .fc-timegrid-event .evt{gap:1px; align-items:center; text-align:center; justify-content:center}
+      .fc-timeGridDay-view .fc-timegrid-event .t{font-size:11px; line-height:1.25; font-weight:700; word-break:break-word; white-space:normal}
+      .fc-timeGridDay-view .fc-timegrid-event .tm{font-size:9px; opacity:0.85; font-weight:600}
+      .fc-timeGridDay-view .fc-timegrid-col-events{margin:0 3px}
+      .fc-timeGridDay-view .fc-col-header-cell-cushion{padding:6px 2px; font-size:11px; font-weight:700}
+      
       main{padding-top:calc(var(--header-h) + 8px)}
     }
 
@@ -274,6 +337,224 @@
     /* Animacja feedbacku przycisku eksportu */
     @keyframes shiver-kf{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
     .gcal-btn.shiver{animation: shiver-kf .3s ease}
+
+    /* Niestandardowy popover "+XX więcej" */
+    .fc-popover{
+      background: linear-gradient(180deg, #0d1430 0%, #0b1026 100%) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5) !important;
+      overflow: hidden !important;
+      z-index: 9998 !important;
+      animation: popoverFadeIn 0.2s ease;
+    }
+    @keyframes popoverFadeIn{
+      from{ opacity: 0; transform: translateY(-4px); }
+      to{ opacity: 1; transform: translateY(0); }
+    }
+    .fc-popover-header{
+      background: linear-gradient(180deg, #1a2447 0%, #0f1a3d 100%) !important;
+      border-bottom: 1px solid var(--border) !important;
+      padding: 10px 14px !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      color: var(--text) !important;
+    }
+    .fc-popover-title{
+      color: var(--text) !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+    }
+    .fc-popover-close{
+      color: var(--muted) !important;
+      opacity: 0.7 !important;
+      font-size: 18px !important;
+      line-height: 1 !important;
+      transition: opacity 0.2s, color 0.2s !important;
+    }
+    .fc-popover-close:hover{
+      opacity: 1 !important;
+      color: var(--accent) !important;
+    }
+    .fc-popover-body{
+      padding: 8px !important;
+      max-height: 400px !important;
+      overflow-y: auto !important;
+      background: transparent !important;
+    }
+    
+    /* Wydarzenia w popoverze - ulepszone */
+    .fc-popover .fc-daygrid-event{
+      margin: 4px 0 !important;
+      padding: 8px 10px !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(124,156,255,0.3) !important;
+      background: linear-gradient(135deg, rgba(32,48,87,0.9) 0%, rgba(20,35,70,0.9) 100%) !important;
+      transition: all 0.2s !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+      cursor: pointer !important;
+    }
+    .fc-popover .fc-daygrid-event:hover{
+      transform: translateX(4px) !important;
+      box-shadow: 0 4px 12px rgba(124,156,255,0.3) !important;
+      border-color: rgba(124,156,255,0.6) !important;
+    }
+    .fc-popover .fc-daygrid-event.remote{
+      background: linear-gradient(135deg, rgba(255,65,65,0.25) 0%, rgba(200,40,40,0.25) 100%) !important;
+      border-color: rgba(255,65,65,0.4) !important;
+    }
+    .fc-popover .fc-daygrid-event.remote:hover{
+      border-color: rgba(255,65,65,0.7) !important;
+      box-shadow: 0 4px 12px rgba(255,65,65,0.3) !important;
+    }
+    
+    /* Tytuł i czas w popoverze */
+    .fc-popover .fc-event-title{
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      color: #e8ecf1 !important;
+      line-height: 1.4 !important;
+      margin-bottom: 4px !important;
+    }
+    .fc-popover .fc-event-time{
+      font-size: 11px !important;
+      color: #b8c5ff !important;
+      font-weight: 600 !important;
+      opacity: 0.9 !important;
+    }
+    
+    /* Scrollbar dla popovera */
+    .fc-popover-body::-webkit-scrollbar{
+      width: 6px;
+    }
+    .fc-popover-body::-webkit-scrollbar-track{
+      background: rgba(15,21,43,0.3);
+      border-radius: 3px;
+    }
+    .fc-popover-body::-webkit-scrollbar-thumb{
+      background: rgba(124,156,255,0.3);
+      border-radius: 3px;
+    }
+    .fc-popover-body::-webkit-scrollbar-thumb:hover{
+      background: rgba(124,156,255,0.5);
+    }
+    
+    /* Responsywność popovera */
+    @media (max-width: 900px){
+      .fc-popover{
+        max-width: min(360px, calc(100vw - 20px)) !important;
+      }
+      .fc-popover-body{
+        max-height: 300px !important;
+      }
+    }
+    @media (max-width: 480px){
+      .fc-popover{
+        max-width: min(300px, calc(100vw - 16px)) !important;
+      }
+      .fc-popover-header{
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+      }
+      .fc-popover-body{
+        max-height: 250px !important;
+        padding: 6px !important;
+      }
+      .fc-popover .fc-daygrid-event{
+        padding: 6px 8px !important;
+        margin: 3px 0 !important;
+      }
+      .fc-popover .fc-event-title{
+        font-size: 12px !important;
+      }
+      .fc-popover .fc-event-time{
+        font-size: 10px !important;
+      }
+    }
+
+    /* Mapa kampusu */
+    .campus-map{
+      margin-top: 16px;
+      margin-bottom: 16px;
+      background: linear-gradient(180deg, #0d1430 0%, #0b1026 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .campus-map-title{
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 10px 0;
+    }
+    .map-container{
+      position: relative;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f5f5f5;
+    }
+    .map-svg{
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .map-bg{
+      width: 100%;
+      height: 100%;
+    }
+    .building-area{
+      fill: transparent;
+      stroke: transparent;
+      stroke-width: 2;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .building-area:hover{
+      fill: rgba(124, 156, 255, 0.3);
+      stroke: rgba(124, 156, 255, 0.8);
+      stroke-width: 3;
+    }
+    .building-label{
+      position: absolute;
+      background: rgba(15, 21, 43, 0.95);
+      border: 1px solid var(--accent);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transform: translate(-50%, -100%);
+      margin-top: -8px;
+    }
+    .building-label::after{
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--accent);
+    }
+    .building-label.visible{
+      opacity: 1;
+    }
+    
+    @media (max-width: 900px){
+      .campus-map{
+        max-width: 600px;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -315,7 +596,54 @@
           <label for="room">Sala</label>
           <select id="room"><option value="">Wszystkie</option></select>
         </div>
+        <div class="group">
+          <label for="lecturer">Wykładowca</label>
+          <select id="lecturer"><option value="">Wszyscy</option></select>
+        </div>
         <button id="reset" class="reset">Wyczyść filtry</button>
+      </div>
+
+      <!-- Mapa kampusu -->
+      <div class="campus-map">
+        <div class="campus-map-title">Mapa Kampusu</div>
+        <div class="map-container">
+          <svg class="map-svg" viewBox="0 0 896 1152" xmlns="http://www.w3.org/2000/svg">
+            <!-- Tło - zdjęcie kampusu -->
+            <image class="map-bg" href="./campus-map.png" x="0" y="0" width="896" height="1152" preserveAspectRatio="xMidYMid slice"/>
+            
+            <!-- CsH - Collegium sub Horologio (górny budynek w kształcie T) -->
+            <polygon 
+              class="building-area" 
+              data-building="csh" 
+              data-name="Collegium sub Horologio"
+              points="471,154 372,186 342,118 346,89 270,108 314,205 215,245 235,306 453,215 490,216">
+              <title>Collegium sub Horologio (CsH)</title>
+            </polygon>
+            
+            <!-- CP - Collegium Primum (środkowy budynek) -->
+            <polygon 
+              class="building-area" 
+              data-building="cp" 
+              data-name="Collegium Primum"
+              points="559,457 458,491 447,485 430,502 337,537 353,589 573,512">
+              <title>Collegium Primum (CP)</title>
+            </polygon>
+            
+            <!-- CI - Collegium Inventorum (dolny budynek) -->
+            <polygon 
+              class="building-area" 
+              data-building="ci" 
+              data-name="Collegium Inventorum"
+              points="617,648 552,673 611,833 574,858 584,882 626,875 684,1031 749,1003">
+              <title>Collegium Inventorum (CI)</title>
+            </polygon>
+          </svg>
+          
+          <!-- Etykiety budynków (tooltips) -->
+          <div class="building-label" id="label-csh">Collegium sub Horologio (CsH)</div>
+          <div class="building-label" id="label-cp">Collegium Primum (CP)</div>
+          <div class="building-label" id="label-ci">Collegium Inventorum (CI)</div>
+        </div>
       </div>
 
       <div class="stats">
@@ -355,6 +683,7 @@
       program: document.getElementById('program'),
       type: document.getElementById('type'),
       room: document.getElementById('room'),
+      lecturer: document.getElementById('lecturer'),
     };
     const statElements = {
       total: document.getElementById('statTotal'),
@@ -370,9 +699,10 @@
     // Funkcja do dynamicznego dostosowywania widoku
     function getDayMax(){
       const w = window.innerWidth;
-      if(w <= 480) return 2;
-      if(w <= 900) return 3;
-      return 4;
+      if(w <= 480) return 4;
+      if(w <= 700) return 5;
+      if(w <= 900) return 6;
+      return 6;
     }
 
     // ZMIANA: Uproszczona funkcja resize, głównie do ustawiania zmiennej CSS
@@ -437,6 +767,10 @@
       }
       populateSelect(filterElements.type, events.map(e => e.type));
       populateSelect(filterElements.room, events.map(e => e.location));
+      
+      // Wykładowcy - spłaszczenie tablic
+      const allLecturers = events.flatMap(e => e.lecturers || []);
+      populateSelect(filterElements.lecturer, allLecturers);
 
       // Ładowanie zapisanych filtrów
       try{
@@ -472,7 +806,8 @@
       const data = { 
         program: filterElements.program.value, 
         type: filterElements.type.value, 
-        room: filterElements.room.value 
+        room: filterElements.room.value,
+        lecturer: filterElements.lecturer.value
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
@@ -488,16 +823,19 @@
 
     function initCalendar(events){
       if(fc) fc.destroy();
+      const isMobile = window.innerWidth <= 900;
       fc = new FullCalendar.Calendar(calendarEl, {
         locale: 'pl', firstDay: 1, initialView: 'dayGridMonth',
         // ZMIANA: Kluczowa zmiana pozwalająca na naturalny wzrost kalendarza i scroll strony
-        height: 'auto', 
+        height: isMobile ? 'auto' : 'auto',
+        contentHeight: isMobile ? 'auto' : undefined,
         events: [],
         displayEventEnd: true,
         dayMaxEventRows: getDayMax(),
         fixedWeekCount: false,
         showNonCurrentDates: true, // Zmienione na true, bo CSS je styluje, a to lepsze dla nawigacji
-        moreLinkClick: 'popover',
+        moreLinkClick: isMobile ? 'popover' : 'popover',
+        dayMaxEvents: isMobile,
         allDaySlot: false,
         handleWindowResize: false, // Kontrolujemy resize ręcznie
         slotDuration: '00:15:00',
@@ -517,6 +855,20 @@
         eventDidMount: info => {
           info.el.addEventListener('mouseenter', ()=> showTooltip(info.el, buildTooltipHtml(info.event.extendedProps, info.event.classNames.includes('remote'))));
           info.el.addEventListener('mouseleave', hideTooltip);
+        },
+        moreLinkContent: arg => {
+          return { html: `<span style="font-weight: 700; color: var(--accent);">+${arg.num} więcej</span>` };
+        },
+        moreLinkDidMount: info => {
+          // Dodaj styl hover dla linku "+XX więcej"
+          info.el.style.transition = 'all 0.2s';
+          info.el.addEventListener('mouseenter', () => {
+            info.el.style.transform = 'translateY(-1px)';
+            info.el.style.textDecoration = 'none';
+          });
+          info.el.addEventListener('mouseleave', () => {
+            info.el.style.transform = 'translateY(0)';
+          });
         },
         datesSet: () => { 
           applyFilters(); 
@@ -695,11 +1047,13 @@
       const fProg = filterElements.program.value;
       const fType = filterElements.type.value;
       const fRoom = filterElements.room.value;
+      const fLecturer = filterElements.lecturer.value;
 
       const filtered = rawData.events.filter(ev => {
         if(fProg && ev.program !== fProg) return false;
         if(fType && ev.type !== fType) return false;
         if(fRoom && ev.location !== fRoom) return false;
+        if(fLecturer && (!ev.lecturers || !ev.lecturers.includes(fLecturer))) return false;
         return true;
       });
 
@@ -833,10 +1187,78 @@
       }
     }
 
+    // Obsługa mapy kampusu
+    function initCampusMap(){
+      const buildings = document.querySelectorAll('.building-area');
+      const mapContainer = document.querySelector('.map-container');
+      
+      if(!buildings.length || !mapContainer) return;
+      
+      buildings.forEach(building => {
+        const code = building.dataset.building;
+        const label = document.getElementById(`label-${code}`);
+        
+        if(!label) return;
+        
+        building.addEventListener('mouseenter', (e) => {
+          // Pokaż tooltip
+          label.classList.add('visible');
+          
+          // Pozycjonuj tooltip
+          const rect = building.getBoundingClientRect();
+          const containerRect = mapContainer.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2 - containerRect.left;
+          const centerY = rect.top - containerRect.top;
+          
+          label.style.left = centerX + 'px';
+          label.style.top = centerY + 'px';
+        });
+        
+        building.addEventListener('mouseleave', () => {
+          label.classList.remove('visible');
+        });
+        
+        building.addEventListener('click', () => {
+          const buildingCode = code.toUpperCase();
+          const buildingName = building.dataset.name;
+          
+          console.log(`Kliknięto budynek: ${buildingName} (${buildingCode})`);
+          
+          // Filtrowanie sal według budynku
+          const roomSelect = filterElements.room;
+          if(roomSelect){
+            let foundRoom = null;
+            for(const option of roomSelect.options){
+              if(option.value && option.value.includes(buildingCode)){
+                foundRoom = option.value;
+                break;
+              }
+            }
+            
+            if(foundRoom){
+              roomSelect.value = foundRoom;
+              saveFilters();
+              applyFilters();
+              
+              // Scroll do kalendarza na desktopie
+              if(window.innerWidth > 900){
+                document.getElementById('calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            } else {
+              console.log(`Brak sal w budynku ${buildingCode}`);
+            }
+          }
+        });
+      });
+    }
+
     // Podpięcie przycisku eksportu
     document.addEventListener('DOMContentLoaded', ()=>{
       const exportBtn = document.getElementById('exportGoogle');
       if(exportBtn){ exportBtn.addEventListener('click', exportToGoogleCalendar); }
+      
+      // Inicjalizacja mapy kampusu
+      initCampusMap();
     });
 
     // Rejestracja Service Workera (PWA)
