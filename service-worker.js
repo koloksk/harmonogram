@@ -62,6 +62,13 @@ self.addEventListener('fetch', event => {
   );
 });
 
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'showWidget') {
+    console.log('SW: Otrzymano polecenie showWidget, uruchamiam updateWidget...');
+    event.waitUntil(updateWidget());
+  }
+});
+
 self.addEventListener('periodicsync', event => {
   if (event.tag === 'update-widget') {
     event.waitUntil(updateWidget());
