@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mup-harmonogram-v5';
+const CACHE_NAME = 'mup-harmonogram-v6';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -78,9 +78,29 @@ self.addEventListener('periodicsync', event => {
 });
 
 self.addEventListener('notificationclick', event => {
+  const action = event.action;
+  
   event.notification.close();
+  
+  if (action === 'dismiss') {
+    // Użytkownik kliknął "Zamknij" - nic nie rób, tylko zamknij
+    return;
+  }
+  
+  // Domyślnie lub przycisk "Zobacz harmonogram" - otwórz aplikację
   event.waitUntil(
-    clients.openWindow('./')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      // Jeśli aplikacja jest już otwarta, przełącz na nią
+      for (const client of clientList) {
+        if (client.url.includes(self.registration.scope) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Jeśli nie ma otwartej aplikacji, otwórz nową kartę
+      if (clients.openWindow) {
+        return clients.openWindow('./');
+      }
+    })
   );
 });
 
@@ -107,14 +127,14 @@ async function showNextClassNotification(harmonogramData) {
     const nextClass = getNextClass(harmonogramData);
     
     if (!nextClass) {
-      await self.registration.showNotification('MUP Harmonogram', {
-        body: 'Brak zaplanowanych zajęć',
+      await self.registration.showNotification('📅 MUP Harmonogram', {
+        body: '✨ Brak zaplanowanych zajęć w najbliższym czasie',
         icon: './logo.png',
         badge: './logo.png',
         tag: 'next-class',
         requireInteraction: true,
         actions: [
-          { action: 'open', title: 'Otwórz harmonogram' }
+          { action: 'open', title: '📖 Otwórz harmonogram', icon: './logo.png' }
         ]
       });
       return;
@@ -124,15 +144,37 @@ async function showNextClassNotification(harmonogramData) {
     const location = nextClass.location || 'Sala nieznana';
     const teacher = nextClass.teacher || '';
     
-    let body = `${nextClass.start} • ${location}`;
-    if (teacher) {
-      body += `\n${teacher}`;
-    }
+    // Buduj piękny, czytelny body
+    let bodyLines = [];
+    
+    // Linia 1: Czas pozostały (duży, wyróżniony)
     if (timeUntil) {
-      body = `${timeUntil}\n${body}`;
+      bodyLines.push(`⏰ ${timeUntil}`);
     }
+    
+    // Linia 2: Godzina rozpoczęcia
+    bodyLines.push(`🕐 ${nextClass.start} - ${nextClass.end}`);
+    
+    // Linia 3: Lokalizacja
+    bodyLines.push(`📍 ${location}`);
+    
+    // Linia 4: Prowadzący (jeśli jest)
+    if (teacher) {
+      bodyLines.push(`👨‍🏫 ${teacher}`);
+    }
+    
+    const body = bodyLines.join('\n');
 
-    await self.registration.showNotification(nextClass.title, {
+    // Tytuł z emoji (kategoryzacja typu zajęć)
+    let titleEmoji = '📚';
+    const titleLower = nextClass.title.toLowerCase();
+    if (titleLower.includes('wykład')) titleEmoji = '🎓';
+    else if (titleLower.includes('laboratorium') || titleLower.includes('lab')) titleEmoji = '🔬';
+    else if (titleLower.includes('ćwiczenia') || titleLower.includes('ćw')) titleEmoji = '✏️';
+    else if (titleLower.includes('projekt')) titleEmoji = '💻';
+    else if (titleLower.includes('seminarium')) titleEmoji = '💬';
+
+    await self.registration.showNotification(`${titleEmoji} ${nextClass.title}`, {
       body: body,
       icon: './logo.png',
       badge: './logo.png',
@@ -140,7 +182,8 @@ async function showNextClassNotification(harmonogramData) {
       requireInteraction: true,
       vibrate: [200, 100, 200],
       actions: [
-        { action: 'open', title: 'Otwórz harmonogram' }
+        { action: 'open', title: '📖 Zobacz harmonogram', icon: './logo.png' },
+        { action: 'dismiss', title: '✖️ Zamknij', icon: './logo.png' }
       ],
       data: {
         url: './',
