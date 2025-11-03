@@ -2143,12 +2143,6 @@
           return;
         }
 
-        // Sprawdź czy Service Worker jest zarejestrowany
-        if (!('serviceWorker' in navigator)) {
-          alert('Twoja przeglądarka nie obsługuje Service Workers');
-          return;
-        }
-
         // Poproś o uprawnienia do powiadomień
         let permission = Notification.permission;
         if (permission === 'default') {
@@ -2160,9 +2154,6 @@
           return;
         }
 
-        // Poczekaj na aktywację Service Workera
-        const registration = await navigator.serviceWorker.ready;
-
         // Pobierz dane harmonogramu
         const response = await fetch('./harmonogram.json');
         const data = await response.json();
@@ -2171,13 +2162,15 @@
         const nextClass = getNextClass(data);
 
         if (!nextClass) {
-          await registration.showNotification('MUP Harmonogram', {
+          // Użyj podstawowego Notification API (NAJPROSTSZE - zawsze działa!)
+          new Notification('MUP Harmonogram', {
             body: 'Brak zaplanowanych zajęć',
             icon: './logo.png',
-            badge: './logo.png',
-            tag: 'next-class',
-            requireInteraction: true
+            tag: 'next-class'
           });
+          
+          // Feedback dla użytkownika
+          showSuccessFeedback();
           return;
         }
 
@@ -2194,81 +2187,81 @@
           body = `${timeUntil}\n${body}`;
         }
 
-        // Pokaż powiadomienie
-        await registration.showNotification(nextClass.title, {
+        // Pokaż powiadomienie - PODSTAWOWE API (niezawodne!)
+        const notification = new Notification(nextClass.title, {
           body: body,
           icon: './logo.png',
-          badge: './logo.png',
           tag: 'next-class',
-          requireInteraction: true,
-          vibrate: [200, 100, 200],
-          actions: [
-            { action: 'open', title: 'Otwórz harmonogram' }
-          ]
+          requireInteraction: true
         });
 
+        // Obsługa kliknięcia w powiadomienie
+        notification.onclick = function() {
+          window.focus();
+          notification.close();
+        };
+
         // Feedback dla użytkownika
-        const btn = document.getElementById('widgetNotification');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Przypięto!</span>';
-        btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
-        
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.style.background = '';
-        }, 2000);
+        showSuccessFeedback();
 
       } catch (error) {
         console.error('Failed to show notification:', error);
-        alert('Nie udało się pokazać powiadomienia. Sprawdź uprawnienia.');
+        alert('Nie udało się pokazać powiadomienia. Błąd: ' + error.message);
       }
+    }
+
+    // Funkcja pokazująca feedback po udanym przypięciu
+    function showSuccessFeedback() {
+      const btn = document.getElementById('widgetNotification');
+      if (!btn) return;
+      
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Przypięto!</span>';
+      btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+      
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = '';
+      }, 2000);
     }
 
     // Funkcja znajdujaca następne zajęcia
     function getNextClass(data) {
       const now = new Date();
-      const currentDay = now.getDay();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
-
-      const daysMap = {
-        1: 'monday',
-        2: 'tuesday', 
-        3: 'wednesday',
-        4: 'thursday',
-        5: 'friday',
-        6: 'saturday',
-        0: 'sunday'
-      };
+      
+      // Jeśli dane mają strukturę z events
+      if (!data.events || !Array.isArray(data.events)) {
+        console.error('Brak danych o zajęciach');
+        return null;
+      }
 
       let foundClass = null;
       let minDiff = Infinity;
 
-      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-        const checkDay = (currentDay + dayOffset) % 7;
-        const dayName = daysMap[checkDay];
+      for (const event of data.events) {
+        // Parsuj datę i czas wydarzenia
+        const eventDate = new Date(event.date);
+        const [hours, minutes] = event.startTime.split(':').map(Number);
+        eventDate.setHours(hours, minutes, 0, 0);
         
-        if (!data[dayName] || !data[dayName].classes) continue;
-
-        for (const cls of data[dayName].classes) {
-          const [hours, minutes] = cls.start.split(':').map(Number);
-          const classTime = hours * 60 + minutes;
-          
-          let timeDiff;
-          if (dayOffset === 0) {
-            timeDiff = classTime - currentTime;
-            if (timeDiff < 0) continue;
-          } else {
-            timeDiff = dayOffset * 24 * 60 + (classTime - currentTime);
-          }
-
-          if (timeDiff >= 0 && timeDiff < minDiff) {
-            minDiff = timeDiff;
-            foundClass = {
-              ...cls,
-              day: dayName,
-              dayOffset: dayOffset
-            };
-          }
+        // Oblicz różnicę czasu
+        const diff = eventDate - now;
+        
+        // Pomiń przeszłe zajęcia
+        if (diff < 0) continue;
+        
+        // Znajdź najbliższe zajęcia
+        if (diff < minDiff) {
+          minDiff = diff;
+          foundClass = {
+            title: event.title,
+            start: event.startTime,
+            end: event.endTime,
+            location: event.location,
+            teacher: event.lecturers && event.lecturers.length > 0 ? event.lecturers.join(', ') : '',
+            date: event.date,
+            startDateTime: eventDate
+          };
         }
       }
 
@@ -2277,16 +2270,10 @@
 
     // Funkcja obliczająca czas do zajęć
     function getTimeUntilClass(classInfo) {
-      if (!classInfo || classInfo.dayOffset === undefined) return '';
+      if (!classInfo || !classInfo.startDateTime) return '';
       
       const now = new Date();
-      const [hours, minutes] = classInfo.start.split(':').map(Number);
-      
-      const classStart = new Date(now);
-      classStart.setDate(classStart.getDate() + classInfo.dayOffset);
-      classStart.setHours(hours, minutes, 0, 0);
-      
-      const diff = classStart - now;
+      const diff = classInfo.startDateTime - now;
       const diffMinutes = Math.floor(diff / (1000 * 60));
       const diffHours = Math.floor(diffMinutes / 60);
       const diffDays = Math.floor(diffHours / 24);

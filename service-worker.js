@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mup-harmonogram-v2';
+const CACHE_NAME = 'mup-harmonogram-v3';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -145,52 +145,40 @@ async function showNextClassNotification(harmonogramData) {
 
 function getNextClass(data) {
   const now = new Date();
-  const currentDay = now.getDay(); // 0 = niedziela, 1 = poniedziałek, ...
-  const currentTime = now.getHours() * 60 + now.getMinutes();
-
-  // Dni tygodnia
-  const daysMap = {
-    1: 'monday',
-    2: 'tuesday', 
-    3: 'wednesday',
-    4: 'thursday',
-    5: 'friday',
-    6: 'saturday',
-    0: 'sunday'
-  };
+  
+  // Jeśli dane mają strukturę z events
+  if (!data.events || !Array.isArray(data.events)) {
+    console.error('Brak danych o zajęciach');
+    return null;
+  }
 
   let foundClass = null;
   let minDiff = Infinity;
 
-  // Sprawdź wszystkie dni
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDay = (currentDay + dayOffset) % 7;
-    const dayName = daysMap[checkDay];
+  for (const event of data.events) {
+    // Parsuj datę i czas wydarzenia
+    const eventDate = new Date(event.date);
+    const [hours, minutes] = event.startTime.split(':').map(Number);
+    eventDate.setHours(hours, minutes, 0, 0);
     
-    if (!data[dayName] || !data[dayName].classes) continue;
-
-    for (const cls of data[dayName].classes) {
-      const [hours, minutes] = cls.start.split(':').map(Number);
-      const classTime = hours * 60 + minutes;
-      
-      let timeDiff;
-      if (dayOffset === 0) {
-        // Dzisiaj - tylko przyszłe zajęcia
-        timeDiff = classTime - currentTime;
-        if (timeDiff < 0) continue;
-      } else {
-        // Przyszłe dni
-        timeDiff = dayOffset * 24 * 60 + (classTime - currentTime);
-      }
-
-      if (timeDiff >= 0 && timeDiff < minDiff) {
-        minDiff = timeDiff;
-        foundClass = {
-          ...cls,
-          day: dayName,
-          dayOffset: dayOffset
-        };
-      }
+    // Oblicz różnicę czasu
+    const diff = eventDate - now;
+    
+    // Pomiń przeszłe zajęcia
+    if (diff < 0) continue;
+    
+    // Znajdź najbliższe zajęcia
+    if (diff < minDiff) {
+      minDiff = diff;
+      foundClass = {
+        title: event.title,
+        start: event.startTime,
+        end: event.endTime,
+        location: event.location,
+        teacher: event.lecturers && event.lecturers.length > 0 ? event.lecturers.join(', ') : '',
+        date: event.date,
+        startDateTime: eventDate
+      };
     }
   }
 
@@ -198,17 +186,10 @@ function getNextClass(data) {
 }
 
 function getTimeUntilClass(classInfo) {
-  if (!classInfo || classInfo.dayOffset === undefined) return '';
+  if (!classInfo || !classInfo.startDateTime) return '';
   
   const now = new Date();
-  const [hours, minutes] = classInfo.start.split(':').map(Number);
-  
-  // Oblicz dokładny czas rozpoczęcia
-  const classStart = new Date(now);
-  classStart.setDate(classStart.getDate() + classInfo.dayOffset);
-  classStart.setHours(hours, minutes, 0, 0);
-  
-  const diff = classStart - now;
+  const diff = classInfo.startDateTime - now;
   const diffMinutes = Math.floor(diff / (1000 * 60));
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
