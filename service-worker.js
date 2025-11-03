@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mup-harmonogram-v3';
+const CACHE_NAME = 'mup-harmonogram-v5';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -15,24 +15,18 @@ const URLS_TO_CACHE = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(URLS_TO_CACHE))
-      .then(() => self.skipWaiting())
-  );
+  console.log('SW: Instalacja rozpoczęta...');
+  // UPROSZCZONE: Nie cache'uj podczas instalacji - to blokuje aktywację
+  event.waitUntil(self.skipWaiting());
+  console.log('SW: skipWaiting() wywołane');
 });
 
 self.addEventListener('activate', event => {
+  console.log('SW: Aktywacja rozpoczęta...');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    self.clients.claim().then(() => {
+      console.log('SW: clients.claim() - Service Worker aktywny!');
+    })
   );
 });
 
@@ -63,6 +57,14 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('message', event => {
+  // Obsługa SKIP_WAITING - natychmiastowa aktywacja
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('SW: Otrzymano SKIP_WAITING, aktywuję natychmiast...');
+    self.skipWaiting();
+    return;
+  }
+  
+  // Obsługa showWidget
   if (event.data && event.data.action === 'showWidget') {
     console.log('SW: Otrzymano polecenie showWidget, uruchamiam updateWidget...');
     event.waitUntil(updateWidget());

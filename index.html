@@ -15,6 +15,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MUP">
   <meta name="theme-color" content="#0b1020">
+  
+  <!-- Service Worker - rejestracja od razu, bez czekania! -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(reg => console.log('✅ Service Worker zarejestrowany:', reg))
+        .catch(err => console.error('❌ Błąd rejestracji SW:', err));
+    }
+  </script>
+  
   <style>
     :root{
       --bg:#0b1020; --panel:#0f152b; --muted:#9aa1b2; --text:#e8ecf1; --accent:#7c9cff; --chip:#1b2340; --border:#1f2642;
@@ -2154,24 +2164,49 @@
           return;
         }
 
-        // KROK 1: Upewnij się, że Service Worker jest gotowy
-        console.log('Czekam na Service Worker...');
-        const registration = await navigator.serviceWorker.ready;
-        console.log('Service Worker jest gotowy.', registration);
-
-        // KROK 2: Wyślij polecenie do Service Workera
-        console.log('Wysyłam polecenie "showWidget" do Service Workera...');
-        if (registration.active) {
-          registration.active.postMessage({
-            action: 'showWidget'
-          });
-          console.log('Polecenie wysłane.');
-          
-          // Pokaż feedback sukcesu
-          showSuccessFeedback();
-        } else {
-          throw new Error('Brak aktywnego Service Workera.');
+        // Sprawdź czy Service Worker w ogóle istnieje
+        if (!('serviceWorker' in navigator)) {
+          alert('Service Worker nie jest wspierany w tej przeglądarce');
+          return;
         }
+
+        console.log('🔍 Czekam na Service Worker (max 10s)...');
+        
+        // Poczekaj na Service Worker z timeout
+        let registration;
+        try {
+          registration = await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout')), 10000)
+            )
+          ]);
+          console.log('✅ Service Worker gotowy!');
+        } catch (timeoutError) {
+          console.error('❌ Service Worker nie aktywował się w ciągu 10s');
+          alert('Service Worker ładuje się zbyt wolno. Odśwież stronę i spróbuj ponownie.');
+          return;
+        }
+        
+        console.log('📋 Stan SW:', {
+          installing: !!registration.installing,
+          waiting: !!registration.waiting,
+          active: !!registration.active,
+          scope: registration.scope
+        });
+
+        // Sprawdź czy jest aktywny
+        if (!registration.active) {
+          console.error('❌ Brak aktywnego Service Workera!');
+          alert('Service Worker nie jest aktywny. Odśwież stronę.');
+          return;
+        }
+
+        console.log('📤 Wysyłam polecenie "showWidget" do Service Workera...');
+        registration.active.postMessage({ action: 'showWidget' });
+        console.log('✅ Polecenie wysłane!');
+        
+        showSuccessFeedback();
 
       } catch (error) {
         console.error('Błąd podczas wysyłania polecenia do Service Workera:', error);
@@ -2262,18 +2297,7 @@
       }
     }
 
-    // Rejestracja Service Workera (PWA)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(err => {
-          console.warn('SW registration failed', err);
-        });
-      });
-    }
-
-
-
-        // Widget support - aktualizacja danych dla widgetu
+    // Widget support - aktualizacja danych dla widgetu
     async function updateWidgetData() {
       try {
         const pick = pickNextOrCurrent(lastFiltered || rawData.events);
