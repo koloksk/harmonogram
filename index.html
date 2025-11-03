@@ -2161,34 +2161,55 @@
         // Znajdź najbliższe zajęcia
         const nextClass = getNextClass(data);
 
+        // Przygotuj tytuł i treść powiadomienia
+        let title, body;
         if (!nextClass) {
-          // Użyj podstawowego Notification API (NAJPROSTSZE - zawsze działa!)
-          new Notification('MUP Harmonogram', {
-            body: 'Brak zaplanowanych zajęć',
-            icon: './logo.png',
-            tag: 'next-class'
-          });
+          title = 'MUP Harmonogram';
+          body = 'Brak zaplanowanych zajęć';
+        } else {
+          // Oblicz czas do zajęć
+          const timeUntil = getTimeUntilClass(nextClass);
+          const location = nextClass.location || 'Sala nieznana';
+          const teacher = nextClass.teacher || '';
           
-          // Feedback dla użytkownika
-          showSuccessFeedback();
-          return;
+          title = nextClass.title;
+          body = `${nextClass.start} • ${location}`;
+          if (teacher) {
+            body += `\n${teacher}`;
+          }
+          if (timeUntil) {
+            body = `${timeUntil}\n${body}`;
+          }
         }
 
-        // Oblicz czas do zajęć
-        const timeUntil = getTimeUntilClass(nextClass);
-        const location = nextClass.location || 'Sala nieznana';
-        const teacher = nextClass.teacher || '';
-        
-        let body = `${nextClass.start} • ${location}`;
-        if (teacher) {
-          body += `\n${teacher}`;
-        }
-        if (timeUntil) {
-          body = `${timeUntil}\n${body}`;
+        // HYBRYDOWE ROZWIĄZANIE: Sprawdź czy Service Worker jest dostępny (wymagane na mobile)
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            
+            // Użyj Service Worker API (działa na Android/iOS)
+            await registration.showNotification(title, {
+              body: body,
+              icon: './logo.png',
+              badge: './logo.png',
+              tag: 'next-class',
+              requireInteraction: true,
+              data: {
+                url: window.location.href
+              }
+            });
+            
+            // Feedback dla użytkownika
+            showSuccessFeedback();
+            return;
+          } catch (swError) {
+            console.warn('Service Worker notification failed, trying basic API:', swError);
+            // Jeśli SW nie zadziała, spróbuj podstawowego API (desktop)
+          }
         }
 
-        // Pokaż powiadomienie - PODSTAWOWE API (niezawodne!)
-        const notification = new Notification(nextClass.title, {
+        // FALLBACK: Podstawowy Notification API (dla desktop/Chrome/Firefox)
+        const notification = new Notification(title, {
           body: body,
           icon: './logo.png',
           tag: 'next-class',
