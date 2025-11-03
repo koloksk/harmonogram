@@ -333,6 +333,26 @@
     .progress{ height:8px; border-radius:999px; background:#142048; border:1px solid #223057; overflow:hidden; margin-top:10px }
     .progress .bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #4a6bff); transition:width .3s ease }
     .next-card.remote .progress .bar{ background:linear-gradient(90deg, #ff5a5a, #ff7a7a) }
+    
+    /* Przycisk widgetu w powiadomieniu */
+    .widget-notif-btn{
+      display:flex; align-items:center; justify-content:center; gap:8px; 
+      width:100%; margin-top:12px; padding:10px 14px; 
+      background:linear-gradient(135deg, #7c9cff 0%, #5a7ee6 100%); 
+      color:#fff; border:0; border-radius:10px; 
+      font-weight:700; font-size:13px; cursor:pointer; 
+      transition: all 0.2s; box-shadow:0 4px 12px rgba(124,156,255,0.3);
+    }
+    .widget-notif-btn:hover{
+      transform:translateY(-2px); 
+      box-shadow:0 6px 16px rgba(124,156,255,0.4);
+    }
+    .widget-notif-btn:active{
+      transform:translateY(0);
+    }
+    .widget-notif-btn svg{
+      flex-shrink:0;
+    }
 
     /* Animacja feedbacku przycisku eksportu */
     @keyframes shiver-kf{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
@@ -1052,6 +1072,13 @@
         <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Postęp zajęć">
           <div class="bar" id="nextProgress"></div>
         </div>
+        <button id="widgetNotification" class="widget-notif-btn" title="Przypnij jako powiadomienie">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span>Przypnij widget</span>
+        </button>
       </div>
 
       <div class="section-title">Filtry</div>
@@ -2099,7 +2126,185 @@
       
       // Inicjalizacja mapy kampusu
       initCampusMap();
+      
+      // Obsługa przycisku powiadomienia widgetu
+      const widgetNotifBtn = document.getElementById('widgetNotification');
+      if(widgetNotifBtn){ 
+        widgetNotifBtn.addEventListener('click', showWidgetNotification); 
+      }
     });
+
+    // Funkcja pokazująca widget jako powiadomienie
+    async function showWidgetNotification() {
+      try {
+        // Sprawdź czy przeglądarka obsługuje powiadomienia
+        if (!('Notification' in window)) {
+          alert('Twoja przeglądarka nie obsługuje powiadomień');
+          return;
+        }
+
+        // Sprawdź czy Service Worker jest zarejestrowany
+        if (!('serviceWorker' in navigator)) {
+          alert('Twoja przeglądarka nie obsługuje Service Workers');
+          return;
+        }
+
+        // Poproś o uprawnienia do powiadomień
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+        }
+
+        if (permission !== 'granted') {
+          alert('Musisz zezwolić na wyświetlanie powiadomień, aby używać widgetu');
+          return;
+        }
+
+        // Poczekaj na aktywację Service Workera
+        const registration = await navigator.serviceWorker.ready;
+
+        // Pobierz dane harmonogramu
+        const response = await fetch('./harmonogram.json');
+        const data = await response.json();
+
+        // Znajdź najbliższe zajęcia
+        const nextClass = getNextClass(data);
+
+        if (!nextClass) {
+          await registration.showNotification('MUP Harmonogram', {
+            body: 'Brak zaplanowanych zajęć',
+            icon: './logo.png',
+            badge: './logo.png',
+            tag: 'next-class',
+            requireInteraction: true
+          });
+          return;
+        }
+
+        // Oblicz czas do zajęć
+        const timeUntil = getTimeUntilClass(nextClass);
+        const location = nextClass.location || 'Sala nieznana';
+        const teacher = nextClass.teacher || '';
+        
+        let body = `${nextClass.start} • ${location}`;
+        if (teacher) {
+          body += `\n${teacher}`;
+        }
+        if (timeUntil) {
+          body = `${timeUntil}\n${body}`;
+        }
+
+        // Pokaż powiadomienie
+        await registration.showNotification(nextClass.title, {
+          body: body,
+          icon: './logo.png',
+          badge: './logo.png',
+          tag: 'next-class',
+          requireInteraction: true,
+          vibrate: [200, 100, 200],
+          actions: [
+            { action: 'open', title: 'Otwórz harmonogram' }
+          ]
+        });
+
+        // Feedback dla użytkownika
+        const btn = document.getElementById('widgetNotification');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Przypięto!</span>';
+        btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = '';
+        }, 2000);
+
+      } catch (error) {
+        console.error('Failed to show notification:', error);
+        alert('Nie udało się pokazać powiadomienia. Sprawdź uprawnienia.');
+      }
+    }
+
+    // Funkcja znajdujaca następne zajęcia
+    function getNextClass(data) {
+      const now = new Date();
+      const currentDay = now.getDay();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+
+      const daysMap = {
+        1: 'monday',
+        2: 'tuesday', 
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday',
+        0: 'sunday'
+      };
+
+      let foundClass = null;
+      let minDiff = Infinity;
+
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const checkDay = (currentDay + dayOffset) % 7;
+        const dayName = daysMap[checkDay];
+        
+        if (!data[dayName] || !data[dayName].classes) continue;
+
+        for (const cls of data[dayName].classes) {
+          const [hours, minutes] = cls.start.split(':').map(Number);
+          const classTime = hours * 60 + minutes;
+          
+          let timeDiff;
+          if (dayOffset === 0) {
+            timeDiff = classTime - currentTime;
+            if (timeDiff < 0) continue;
+          } else {
+            timeDiff = dayOffset * 24 * 60 + (classTime - currentTime);
+          }
+
+          if (timeDiff >= 0 && timeDiff < minDiff) {
+            minDiff = timeDiff;
+            foundClass = {
+              ...cls,
+              day: dayName,
+              dayOffset: dayOffset
+            };
+          }
+        }
+      }
+
+      return foundClass;
+    }
+
+    // Funkcja obliczająca czas do zajęć
+    function getTimeUntilClass(classInfo) {
+      if (!classInfo || classInfo.dayOffset === undefined) return '';
+      
+      const now = new Date();
+      const [hours, minutes] = classInfo.start.split(':').map(Number);
+      
+      const classStart = new Date(now);
+      classStart.setDate(classStart.getDate() + classInfo.dayOffset);
+      classStart.setHours(hours, minutes, 0, 0);
+      
+      const diff = classStart - now;
+      const diffMinutes = Math.floor(diff / (1000 * 60));
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffDays > 0) {
+        return `Za ${diffDays} ${diffDays === 1 ? 'dzień' : 'dni'}`;
+      } else if (diffHours > 0) {
+        const remainingMinutes = diffMinutes % 60;
+        if (remainingMinutes > 0) {
+          return `Za ${diffHours}h ${remainingMinutes}min`;
+        }
+        return `Za ${diffHours}h`;
+      } else if (diffMinutes > 0) {
+        return `Za ${diffMinutes} min`;
+      } else {
+        return 'Teraz';
+      }
+    }
 
     // Rejestracja Service Workera (PWA)
     if ('serviceWorker' in navigator) {

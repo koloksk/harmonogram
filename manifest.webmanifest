@@ -7,6 +7,7 @@
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
   "orientation": "portrait-primary",
+  "permissions": ["notifications"],
   "icons": [
     {
       "src": "./logo.png",
@@ -35,13 +36,6 @@
       "short_name": "Tydzień",
       "description": "Zobacz plan tygodnia",
       "url": "./?view=week",
-      "icons": [{ "src": "./logo.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Widget zajęć",
-      "short_name": "Widget",
-      "description": "Następne zajęcia",
-      "url": "./widget.html",
       "icons": [{ "src": "./logo.png", "sizes": "96x96" }]
     }
   ]
