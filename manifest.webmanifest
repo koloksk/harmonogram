@@ -2,16 +2,47 @@
   "name": "MUP Harmonogram",
   "short_name": "MUP",
   "description": "Harmonogram zajęć – MUP",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
-  "lang": "pl",
+  "orientation": "portrait-primary",
   "icons": [
-    {"src":"logo.png","sizes":"192x192","type":"image/png"},
-    {"src":"logo.png","sizes":"512x512","type":"image/png"},
-    {"src":"logo.png","sizes":"any","type":"image/png", "purpose":"any"},
-    {"src":"logo.png","sizes":"any","type":"image/png", "purpose":"maskable"}
+    {
+      "src": "./logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dzisiaj",
+      "short_name": "Dzisiaj",
+      "description": "Zobacz zajęcia na dziś",
+      "url": "./?view=today",
+      "icons": [{ "src": "./logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Tydzień",
+      "short_name": "Tydzień",
+      "description": "Zobacz plan tygodnia",
+      "url": "./?view=week",
+      "icons": [{ "src": "./logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Widget zajęć",
+      "short_name": "Widget",
+      "description": "Następne zajęcia",
+      "url": "./widget.html",
+      "icons": [{ "src": "./logo.png", "sizes": "96x96" }]
+    }
   ]
 }

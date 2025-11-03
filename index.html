@@ -2110,6 +2110,49 @@
       });
     }
 
+
+
+        // Widget support - aktualizacja danych dla widgetu
+    async function updateWidgetData() {
+      try {
+        const pick = pickNextOrCurrent(lastFiltered || rawData.events);
+        const widgetData = {
+          lastUpdate: new Date().toISOString(),
+          events: lastFiltered || rawData.events
+        };
+        
+        localStorage.setItem('harm_widget_cache', JSON.stringify({ events: widgetData.events }));
+        
+        // Register periodic background sync if supported
+        if ('serviceWorker' in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.periodicSync.register('update-widget', {
+              minInterval: 5 * 60 * 1000 // 5 minutes
+            });
+          } catch (e) {
+            console.warn('Periodic sync registration failed', e);
+          }
+        }
+      } catch (error) {
+        console.error('Widget data update failed:', error);
+      }
+    }
+
+    // Update widget data when filters change
+    const originalApplyFilters = applyFilters;
+    applyFilters = function() {
+      originalApplyFilters();
+      updateWidgetData();
+    };
+
+    // Initial widget data update
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        updateWidgetData();
+        setInterval(updateWidgetData, 5 * 60 * 1000); // Update every 5 minutes
+      }, 1000);
+    });
     loadData();
   </script>
 </body>
