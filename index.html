@@ -60,13 +60,6 @@
         <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Postęp zajęć">
           <div class="bar" id="nextProgress"></div>
         </div>
-        <button id="widgetNotification" class="widget-notif-btn" title="Przypnij jako powiadomienie">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span>Przypnij widget</span>
-        </button>
       </div>
 
       <div class="section-title">Filtry</div>
@@ -179,16 +172,55 @@
         
         <div class="add-schedule-section">
           <h3 class="add-schedule-title">Dodaj nowy harmonogram</h3>
+          
+          <!-- Dodaj z pliku -->
           <div class="file-input-wrapper">
-            <label for="fileInput" class="file-input-label">
+            <label for="fileInput" class="file-input-label" id="fileInputLabel">
               <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              <span>Wybierz plik JSON</span>
+              <span id="fileInputText">Wybierz plik JSON lub XLSX</span>
             </label>
-            <input type="file" id="fileInput" class="file-input" accept=".json" />
+            <input type="file" id="fileInput" class="file-input" accept=".json,.xlsx,.xlsm" />
+          </div>
+          
+          <!-- Separator LUB -->
+          <div style="text-align: center; margin: 20px 0; color: rgba(255,255,255,0.5); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+            lub
+          </div>
+          
+          <!-- Dodaj z URL -->
+          <div class="url-input-wrapper">
+            <div style="margin-bottom: 10px;">
+              <label for="urlInput" style="display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Dodaj z URL
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <input 
+                  type="text" 
+                  id="urlInput" 
+                  placeholder="https://uczelnia.edu.pl/harmonogram.xlsx"
+                  style="flex: 1; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 13px; font-family: 'Inter', sans-serif;"
+                />
+                <button 
+                  id="addUrlBtn" 
+                  style="padding: 10px 20px; background: linear-gradient(135deg, var(--accent) 0%, #667eea 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 13px; transition: transform 0.2s, box-shadow 0.2s;"
+                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(118, 75, 235, 0.4)';"
+                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+                >
+                  Dodaj
+                </button>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px;">
+              💡 Wspierane formaty: .xlsx, .xlsm, .json
+            </div>
           </div>
         </div>
 
@@ -251,6 +283,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
+  <!-- ExcelJS - lepsza biblioteka do odczytu stylów XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script>
     // ZMIANA: Przeniesienie elementów DOM na górę dla lepszej organizacji
     const calendarEl = document.getElementById('calendar');
@@ -276,6 +310,519 @@
     let schedules = [];
     let activeScheduleId = null;
 
+    // ===== PARSOWANIE XLSX =====
+    
+    const MONTH_VARIANTS = {
+      '01': ['stycznia'],
+      '02': ['lutego'],
+      '03': ['marca'],
+      '04': ['kwietnia'],
+      '05': ['maja'],
+      '06': ['czerwca'],
+      '07': ['lipca'],
+      '08': ['sierpnia'],
+      '09': ['wrzesnia', 'września', 'wrze?nia'],
+      '10': ['października', 'pazdziernika', 'pa?dziernika'],
+      '11': ['listopada'],
+      '12': ['grudnia']
+    };
+
+    function parsePolishDateCell(cell){
+      if(!cell) return null;
+      const s = String(cell).toLowerCase();
+      
+      const yearMatch = s.match(/(20\d{2})/);
+      if(!yearMatch) return null;
+      const year = parseInt(yearMatch[1]);
+      
+      const dayMatch = s.match(/\b(\d{1,2})\b/);
+      if(!dayMatch) return null;
+      const day = parseInt(dayMatch[1]);
+      
+      let monthNum = null;
+      for(const [mNum, variants] of Object.entries(MONTH_VARIANTS)){
+        for(const v of variants){
+          if(s.includes(v)){
+            monthNum = mNum;
+            break;
+          }
+        }
+        if(monthNum) break;
+      }
+      
+      if(!monthNum){
+        const parts = s.match(/[a-ząćęłńóśźż\?]+/gi) || [];
+        if(parts.length >= 2){
+          const mid = parts[1].replace(/\?/g, 'z');
+          for(const [mNum, variants] of Object.entries(MONTH_VARIANTS)){
+            if(variants.some(v => mid === v)){
+              monthNum = mNum;
+              break;
+            }
+          }
+        }
+      }
+      
+      if(!monthNum) return null;
+      
+      try{
+        // POPRAWKA: używamy UTC aby uniknąć przesunięcia czasowego
+        const dt = new Date(Date.UTC(year, parseInt(monthNum) - 1, day));
+        return dt.toISOString().split('T')[0];
+      }catch(e){
+        return null;
+      }
+    }
+
+    function addMinutes(hhmm, minutes){
+      const [h, m] = hhmm.split(':').map(Number);
+      const dt = new Date(2000, 0, 1, h, m);
+      dt.setMinutes(dt.getMinutes() + minutes);
+      return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    }
+
+    const TYPE_KEYWORDS = [
+      ['LAB', 'LAB'],
+      [' PROJEKT', 'PROJEKT'],
+      ['PROJEKT', 'PROJEKT'],
+      ['wykład', 'W'],
+      ['konwersatorium', 'K'],
+      ['ćw', 'ĆW'],
+      [' ĆW', 'ĆW'],
+      [' ?W', 'ĆW'],
+      [' ?w', 'ĆW'],
+      // Uwaga: ' W' musi być sprawdzane ostrożnie, żeby nie wyciąć "w" ze słów
+      // Sprawdzamy tylko gdy jest spacją przed i po, lub na końcu
+      [' W ', 'W'],
+      [' W\n', 'W'],
+      ['\nW ', 'W'],
+      [' K ', 'K'],
+      [' K\n', 'K'],
+    ];
+
+    function parseCellDetails(text){
+      const s = String(text || '').trim();
+      const base = {
+        title: null,
+        type: null,
+        lecturers: [],
+        location: null,
+        isRemote: false,
+        color: null,
+        raw: s
+      };
+      
+      if(!s) return base;
+      
+      const sUp = ' ' + s.toUpperCase();
+      for(const [key, val] of TYPE_KEYWORDS){
+        if(sUp.includes(key.toUpperCase())){
+          base.type = val;
+          break;
+        }
+      }
+      
+      const lecturerPattern = /\b(?:dr hab\.|dr|mgr|prof\.?)(?: [a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\.]+){1,3}/g;
+      const lecturers = s.match(lecturerPattern) || [];
+      if(lecturers.length) base.lecturers = lecturers;
+      
+      const roomPatterns = [
+        /\b\d+\.\d+\s*(?:CP|CI|CsH)\b/i,
+        /\b(?:CP|CI|CsH)\s*\d+\b/i,
+        /\baula[^;\n]*/i,
+        /\bsala[^;\n]*/i
+      ];
+      
+      for(const pat of roomPatterns){
+        const m = s.match(pat);
+        if(m){
+          base.location = m[0].trim();
+          break;
+        }
+      }
+      
+      let t = s;
+      t = t.replace(/\b\d+\s*\/\s*\d+\b/g, ' ');
+      for(const lec of lecturers) t = t.replace(lec, ' ');
+      if(base.location) t = t.replace(base.location, ' ');
+      
+      // POPRAWKA: Usuń typy zajęć tylko jako osobne słowa, nie fragmenty innych słów
+      // Używamy granic słów (\b) aby nie usuwać "w" ze środka słów
+      t = t.replace(/\bLAB\b/gi, ' ');
+      t = t.replace(/\bPROJEKT\b/gi, ' ');
+      t = t.replace(/\bĆW\b/gi, ' ');
+      t = t.replace(/\bĆw\b/gi, ' ');
+      t = t.replace(/\b[ćĆ]w\b/gi, ' ');
+      t = t.replace(/\bK\b(?!\w)/g, ' '); // K tylko jeśli nie jest częścią słowa
+      t = t.replace(/\bwykład\b/gi, ' ');
+      t = t.replace(/\bkonwersatorium\b/gi, ' ');
+      // NIE usuwamy samego " W " - to może być część zdania!
+      // Zamiast tego sprawdzamy tylko gdy W jest na końcu lub początku
+      t = t.replace(/^\s*W\s+/i, ' '); // W na początku
+      t = t.replace(/\s+W\s*$/i, ' '); // W na końcu
+      t = t.replace(/\s+W\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])/g, ' '); // W przed wielką literą (np. "Algorytmy W Informatyka")
+      
+      t = t.replace(/\s+/g, ' ').replace(/^[ ;,\n\t]+|[ ;,\n\t]+$/g, '');
+      
+      if(t) base.title = t;
+      
+      return base;
+    }
+
+    function isCellTextRed(cell){
+      if(!cell) return false;
+      
+      // Metoda 1: Sprawdź kolor czcionki w ExcelJS
+      const font = cell.font;
+      if(font && font.color){
+        const color = font.color;
+        
+        // ExcelJS przechowuje kolor jako:
+        // { argb: 'FFFF0000' } lub { theme: 2, tint: 0.5 } lub { indexed: 64 }
+        
+        // 1. Sprawdź ARGB (najczęstszy format)
+        if(color.argb){
+          const argb = String(color.argb).toUpperCase();
+          // ARGB format: AA RR GG BB
+          // Czerwony to: FFFF0000 (lub warianty)
+          // Sprawdzamy ostatnie 6 znaków (RRGGBB)
+          const rgb = argb.length >= 6 ? argb.slice(-6) : argb;
+          
+          if(rgb === 'FF0000' || // czysty czerwony
+             argb === 'FFFF0000' || // pełny ARGB czerwony
+             rgb.startsWith('FF00') || // czerwony z odcieniem
+             rgb.startsWith('F00') || // czerwony skrócony
+             rgb.startsWith('E00') || // ciemny czerwony
+             rgb.startsWith('C00')){ // czerwony z odcieniem
+            console.log('🔴 WYKRYTO CZERWONY!', { cell: cell.address, argb, rgb });
+            return true;
+          }
+        }
+        
+        // 2. Sprawdź indexed color (starsza metoda Excel)
+        if(color.indexed !== undefined){
+          // W Excel indexed 10 to czerwony
+          const redIndexes = [2, 3, 10];
+          if(redIndexes.includes(color.indexed)){
+            console.log('🔴 WYKRYTO CZERWONY (indexed)!', { cell: cell.address, indexed: color.indexed });
+            return true;
+          }
+        }
+        
+        // 3. Sprawdź theme color
+        if(color.theme !== undefined){
+          // Theme 2 = Accent1 (często czerwony w tematach)
+          if(color.theme === 2 || color.theme === 6){
+            console.log('🔴 WYKRYTO CZERWONY (theme)!', { cell: cell.address, theme: color.theme });
+            return true;
+          }
+        }
+      }
+      
+      // Metoda 2: Sprawdź czy w tekście jest marker "zdalnie" (backup)
+      let text = '';
+      if(cell.value){
+        if(cell.value.richText){
+          text = cell.value.richText.map(t => t.text).join('');
+        } else {
+          text = String(cell.value);
+        }
+        
+        text = text.toLowerCase();
+        if(text.includes('zdalnie') || text.includes('online') || text.includes('teams')){
+          console.log('🔴 WYKRYTO ZDALNIE (tekst)!', { cell: cell.address, text: text.substring(0, 50) });
+          return true;
+        }
+      }
+      
+      return false;
+    }
+
+    async function parseXLSXToEvents(arrayBuffer, fileName){
+      try{
+        console.log('📊 Parsowanie XLSX z ExcelJS:', fileName);
+        
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(arrayBuffer);
+        
+        const worksheet = workbook.worksheets[0];
+        const sheetName = worksheet.name;
+        
+        console.log('📄 Arkusz:', sheetName);
+        
+        const maxCol = worksheet.columnCount;
+        const maxRow = worksheet.rowCount;
+        
+        console.log('📏 Wymiary:', `${maxRow} wierszy x ${maxCol} kolumn`);
+        
+        // Forward-fill nagłówków z wierszy 1-4 (wiersz 5 to podgrupy, pomijamy!)
+        const headers = {};
+        let lastZjazd = null, lastDateRaw = null, lastDay = null, lastProgram = null;
+        
+        function getCellValue(row, col){
+          // ExcelJS: row i col są 1-indexed
+          const cell = worksheet.getRow(row).getCell(col);
+          return cell ? cell.value : null;
+        }
+        
+        function getCell(row, col){
+          // ExcelJS: row i col są 1-indexed
+          return worksheet.getRow(row).getCell(col);
+        }
+        
+        function toDateISO(val){
+          if(!val) return null;
+          if(val instanceof Date){
+            // POPRAWKA: używamy UTC aby uniknąć przesunięcia czasowego
+            const year = val.getUTCFullYear();
+            const month = String(val.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(val.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+          if(typeof val === 'number'){
+            // ExcelJS zwraca daty jako obiekt Date lub numer
+            // Jeśli to numer seryjny Excela, konwertujemy
+            const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+            const d = new Date(excelEpoch.getTime() + val * 86400000);
+            const year = d.getUTCFullYear();
+            const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(d.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+          // ExcelJS może zwrócić obiekt { richText: [...] }
+          if(val && val.richText){
+            const text = val.richText.map(t => t.text).join('');
+            return parsePolishDateCell(text);
+          }
+          return parsePolishDateCell(String(val));
+        }
+        
+        // UWAGA: ExcelJS używa 1-indexed (wiersz 1, kolumna 1)
+        // Wiersze 1-4: ZJAZD, DATA, DZIEŃ, PROGRAM/KIERUNEK
+        // Wiersz 5: PODGRUPY (pomijamy!)
+        // Od wiersza 6: dane zajęć
+        for(let c = 1; c <= maxCol; c++){
+          const zjazd = getCellValue(1, c); // wiersz 1: ZJAZD
+          const dateV = getCellValue(2, c); // wiersz 2: DATA
+          const dayV = getCellValue(3, c);  // wiersz 3: DZIEŃ TYGODNIA
+          const programV = getCellValue(4, c); // wiersz 4: PROGRAM/KIERUNEK
+          // Wiersz 5 = podgrupy, pomijamy!
+          
+          // POPRAWKA: Nie używaj forward-fill dla zjazdu jeśli wartość to "nr" lub "zjazd"
+          if(zjazd && String(zjazd).trim()){
+            const zjazdStr = String(zjazd).trim().toLowerCase();
+            if(zjazdStr !== 'nr' && zjazdStr !== 'zjazd' && zjazdStr !== 'lp' && zjazdStr !== 'lp.'){
+              lastZjazd = String(zjazd).trim();
+            }
+          }
+          if(dateV) lastDateRaw = dateV;
+          if(dayV && String(dayV).trim()) lastDay = String(dayV).trim();
+          if(programV && String(programV).trim()) lastProgram = String(programV).trim();
+          
+          headers[c] = {
+            zjazd: lastZjazd,
+            date: toDateISO(lastDateRaw),
+            day: lastDay,
+            program: lastProgram
+          };
+        }
+        
+        // Mapa scaleń - ExcelJS Model
+        const mergedMap = {};
+        // ExcelJS przechowuje merged cells w worksheet.model.merges
+        const merges = worksheet.model?.merges || [];
+        for(const mergeAddr of merges){
+          // mergeAddr jest stringiem jak "A1:B2"
+          const [start, end] = mergeAddr.split(':');
+          const startCell = worksheet.getCell(start);
+          const endCell = worksheet.getCell(end);
+          
+          const minR = startCell.row;
+          const minC = startCell.col;
+          const maxR = endCell.row;
+          const maxC = endCell.col;
+          
+          for(let rr = minR; rr <= maxR; rr++){
+            for(let cc = minC; cc <= maxC; cc++){
+              mergedMap[`${rr},${cc}`] = {minR, minC, maxR, maxC};
+            }
+          }
+        }
+        
+        function timeFromRow(rr){
+          // ExcelJS: wiersz 1-5 to nagłówki/podgrupy, dane od wiersza 6
+          if(rr < 6) return null;
+          const idx = rr - 6; // Wiersz 6 = index 0 (godzina 08:00)
+          const h = 8 + Math.floor((idx * 15) / 60);
+          const m = (idx * 15) % 60;
+          return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+        
+        const events = [];
+        
+        for(let c = 1; c <= maxCol; c++){
+          const meta = headers[c] || {};
+          const dateISO = meta.date;
+          const dayName = meta.day;
+          const program = meta.program;
+          const zjazd = meta.zjazd;
+          
+          // Debug: loguj problematyczne kolumny
+          if(dateISO && dateISO.includes('2025-11-21') && program === 'ENER'){
+            console.log(`🔍 Kolumna ${c} dla ENER 21.11.2025:`, {
+              zjazd, date: dateISO, day: dayName, program
+            });
+          }
+          
+          // POPRAWKA: Bardziej rygorystyczna walidacja kolumny
+          // Pomijamy kolumny bez daty, programu lub ze zjadem "nr" (to nagłówki!)
+          if(!dateISO || !program || !zjazd) continue;
+          
+          const zjazdLower = String(zjazd).toLowerCase().trim();
+          if(zjazdLower === 'nr' || zjazdLower === 'zjazd' || zjazdLower === 'lp' || zjazdLower === 'lp.') continue;
+          
+          // Dodatkowa walidacja - zjazd powinien zawierać cyfrę lub być liczbą
+          if(!/\d/.test(String(zjazd))) {
+            console.warn(`⚠️ Pominięto kolumnę ${c} - zjazd nie zawiera cyfry: "${zjazd}"`);
+            continue;
+          }
+          
+          // Dodatkowa walidacja - sprawdź czy data jest sensowna (po 2020 roku)
+          const yearMatch = dateISO.match(/^(\d{4})/);
+          if(yearMatch && parseInt(yearMatch[1]) < 2020) continue;
+          
+          let r = 6; // Początek danych (wiersz 6 w ExcelJS, wiersz 5 to podgrupy)
+          while(r <= Math.min(maxRow, 57)){ // Max wiersz 57
+            const mergeKey = `${r},${c}`;
+            const tl = mergedMap[mergeKey];
+            let height = 1;
+            let topLeftR = r, topLeftC = c;
+            
+            if(tl){
+              if(r !== tl.minR || c !== tl.minC){
+                r++;
+                continue;
+              }
+              height = tl.maxR - tl.minR + 1;
+              topLeftR = tl.minR;
+              topLeftC = tl.minC;
+            }
+            
+            const cellObj = getCell(topLeftR, topLeftC);
+            const cellVal = cellObj ? cellObj.value : null;
+            let text = '';
+            
+            // ExcelJS może zwrócić richText
+            if(cellVal && cellVal.richText){
+              text = cellVal.richText.map(t => t.text).join('').trim();
+            } else {
+              text = String(cellVal || '').trim();
+            }
+            
+            if(text){
+              const details = parseCellDetails(text);
+              
+              // POPRAWKA: Pomiń wydarzenia które nie mają tytułu lub tytuł to tylko cyfry/spacje
+              if(!details.title || !details.title.trim()) {
+                console.warn(`⚠️ Pominięto komórkę [${topLeftR},${topLeftC}] - brak tytułu po parsowaniu: "${text.substring(0, 50)}"`);
+                r++;
+                continue;
+              }
+              
+              // Pomiń jeśli tytuł to tylko cyfry (np. "08:00" po usunięciu dwukropka, albo numer pokoju "123")
+              const titleOnlyDigits = /^[\d\s:.\-/]+$/.test(details.title.trim());
+              if(titleOnlyDigits) {
+                console.warn(`⚠️ Pominięto komórkę [${topLeftR},${topLeftC}] - tytuł zawiera tylko cyfry: "${details.title}"`);
+                r++;
+                continue;
+              }
+              
+              const startTime = timeFromRow(r);
+              const endTime = startTime ? addMinutes(startTime, height * 15) : null;
+              const remote = isCellTextRed(cellObj);
+              
+              // Debug: loguj WSZYSTKIE komórki ze stylami (pierwsze 5)
+              if(events.length < 5 && cellObj && cellObj.font){
+                console.log(`📝 Komórka [${topLeftR},${topLeftC}]:`, {
+                  text: text.substring(0, 50),
+                  hasFont: !!cellObj.font,
+                  font: cellObj.font,
+                  color: cellObj.font?.color,
+                  isRed: remote
+                });
+              }
+              
+              // Debug: loguj zdalne zajęcia
+              if(remote){
+                console.log('🔴 Znaleziono zajęcia zdalne:', {
+                  title: details.title,
+                  date: dateISO,
+                  time: startTime,
+                  cell: `[${topLeftR},${topLeftC}]`
+                });
+              }
+              
+              events.push({
+                zjazd: zjazd,
+                program: program,
+                date: dateISO,
+                day: dayName,
+                startTime: startTime,
+                endTime: endTime,
+                title: details.title,
+                type: details.type,
+                lecturers: details.lecturers,
+                location: details.location,
+                isRemote: remote,
+                color: remote ? 'red' : null,
+                raw: details.raw
+              });
+              
+              r += height;
+            } else {
+              r++;
+            }
+          }
+        }
+        
+        events.sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          if(dateA !== dateB) return dateA.localeCompare(dateB);
+          
+          const progA = a.program || '';
+          const progB = b.program || '';
+          if(progA !== progB) return progA.localeCompare(progB);
+          
+          const timeA = a.startTime || '';
+          const timeB = b.startTime || '';
+          return timeA.localeCompare(timeB);
+        });
+        
+        // Statystyki parsowania
+        const remoteCount = events.filter(e => e.isRemote).length;
+        console.log(`✅ Sparsowano ${events.length} wydarzeń (${remoteCount} zdalnych - ${(remoteCount/events.length*100).toFixed(1)}%)`);
+        
+        if(remoteCount === 0){
+          console.warn('⚠️ Nie znaleziono żadnych zdalnych zajęć!');
+          console.log('💡 Wskazówka: Sprawdź czy w Excelu czerwony kolor jest ustawiony jako kolor czcionki (nie tła)');
+          console.log('💡 Alternatywa: Dodaj słowo "zdalnie" w tekście zajęć');
+        }
+        
+        return {
+          source_file: fileName,
+          generated_at: new Date().toISOString(),
+          program: 'ALL',
+          events: events
+        };
+      }catch(err){
+        console.error('Błąd parsowania XLSX:', err);
+        throw new Error('Nie udało się przetworzyć pliku XLSX: ' + err.message);
+      }
+    }
+    
+    // ===== KONIEC PARSOWANIA XLSX =====
+
     // ===== SYSTEM ZARZĄDZANIA HARMONOGRAMAMI =====
     
     function loadSchedulesFromStorage(){
@@ -288,8 +835,8 @@
         if(schedules.length === 0){
           schedules.push({
             id: 'default',
-            name: 'Harmonogram główny',
-            path: './harmonogram.json',
+            name: 'Harmonogram studia niestacjonarne',
+            path: 'http://uczelniaoswiecim.edu.pl/wp-content/uploads/2022/10/Harmonogram-studia-niestacjonarne-aktualizacja-23.10.2025.xlsx',
             isDefault: true,
             addedAt: new Date().toISOString(),
             status: 'unknown',
@@ -361,16 +908,28 @@
     }
 
     async function addScheduleFromFile(file){
+      const fileName = file.name.toLowerCase();
+      const isXlsx = fileName.endsWith('.xlsx') || fileName.endsWith('.xlsm');
+      
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = async (e) => {
           try{
-            const data = JSON.parse(e.target.result);
+            let data;
+            
+            if(isXlsx){
+              // Parsowanie pliku XLSX
+              data = await parseXLSXToEvents(e.target.result, file.name);
+            } else {
+              // Parsowanie pliku JSON
+              data = JSON.parse(e.target.result);
+            }
+            
             const validation = await validateScheduleFile(data, file.name);
             
             const newSchedule = {
               id: 'custom_' + Date.now(),
-              name: file.name.replace('.json', ''),
+              name: file.name.replace(/\.(json|xlsx|xlsm)$/i, ''),
               path: null, // Custom file, stored in data
               data: data, // Store data directly
               isDefault: false,
@@ -386,12 +945,154 @@
             renderScheduleList();
             resolve(newSchedule);
           }catch(err){
-            reject(new Error('Nieprawidłowy format pliku JSON: ' + err.message));
+            reject(new Error('Nieprawidłowy format pliku: ' + err.message));
           }
         };
         reader.onerror = () => reject(new Error('Błąd wczytywania pliku'));
-        reader.readAsText(file);
+        
+        if(isXlsx){
+          reader.readAsArrayBuffer(file);
+        } else {
+          reader.readAsText(file);
+        }
       });
+    }
+
+    async function addScheduleFromURL(url, customName = null){
+      try {
+        // Walidacja URL
+        if(!url || !url.trim()){
+          throw new Error('Podaj adres URL');
+        }
+        
+        url = url.trim();
+        
+        // Sprawdź czy to prawidłowy URL
+        let urlObj;
+        try {
+          urlObj = new URL(url);
+        } catch(e) {
+          throw new Error('Nieprawidłowy format URL. Przykład: https://uczelnia.edu.pl/harmonogram.xlsx');
+        }
+        
+        // Sprawdź rozszerzenie
+        const fileName = urlObj.pathname.split('/').pop() || 'harmonogram';
+        const lowerFileName = fileName.toLowerCase();
+        const isXlsx = lowerFileName.endsWith('.xlsx') || lowerFileName.endsWith('.xlsm');
+        const isJson = lowerFileName.endsWith('.json');
+        
+        if(!isXlsx && !isJson){
+          throw new Error('Nieobsługiwany format pliku. Wspierane: .xlsx, .xlsm, .json');
+        }
+        
+        // Sprawdź czy już istnieje harmonogram z tym URL
+        const existing = schedules.find(s => s.path === url);
+        if(existing){
+          throw new Error('Harmonogram z tym URL już istnieje');
+        }
+        
+        // Pokaż overlay z ładowaniem
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loadingOverlay';
+        loadingOverlay.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
+        loadingOverlay.innerHTML = '<div style="font-size: 16px; margin-bottom: 10px;">⏳ Pobieranie harmonogramu...</div><div style="font-size: 12px; opacity: 0.7;">' + url + '</div>';
+        document.body.appendChild(loadingOverlay);
+        
+        // Pobierz plik
+        let res;
+        try {
+          res = await fetch(url, { 
+            cache: 'no-store',
+            mode: 'cors'
+          });
+          
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+        } catch (corsError) {
+          console.warn('⚠️ Błąd CORS, próba użycia CORS proxy...', corsError);
+          
+          // Fallback do CORS proxy
+          const corsProxy = 'https://corsproxy.io/?';
+          const proxiedUrl = corsProxy + encodeURIComponent(url);
+          
+          res = await fetch(proxiedUrl, { 
+            cache: 'no-store'
+          });
+          
+          if (!res.ok) {
+            throw new Error(`Nie udało się pobrać pliku (status: ${res.status})`);
+          }
+        }
+        
+        // Parsuj dane
+        let data;
+        if(isXlsx){
+          const arrayBuffer = await res.arrayBuffer();
+          data = await parseXLSXToEvents(arrayBuffer, fileName);
+        } else {
+          data = await res.json();
+        }
+        
+        // Waliduj
+        const validation = await validateScheduleFile(data, fileName);
+        
+        // Utwórz nowy harmonogram
+        const newSchedule = {
+          id: 'url_' + Date.now(),
+          name: customName || fileName.replace(/\.(json|xlsx|xlsm)$/i, ''),
+          path: url,
+          isDefault: false,
+          addedAt: new Date().toISOString(),
+          status: validation.valid ? 'success' : (validation.errors.length > 0 ? 'error' : 'warning'),
+          eventsCount: validation.eventsCount,
+          errors: validation.errors,
+          warnings: validation.warnings || []
+        };
+        
+        schedules.push(newSchedule);
+        saveSchedulesToStorage();
+        
+        // Usuń overlay ładowania
+        document.body.removeChild(loadingOverlay);
+        
+        // Aktywuj nowy harmonogram
+        activeScheduleId = newSchedule.id;
+        saveSchedulesToStorage();
+        renderScheduleList();
+        loadData();
+        
+        // Pokaż sukces
+        const successMsg = document.createElement('div');
+        successMsg.id = 'successOverlay';
+        successMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
+        successMsg.innerHTML = `
+          <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+          <div style="font-size: 16px; margin-bottom: 8px; font-weight: bold;">Harmonogram dodany!</div>
+          <div style="font-size: 13px; opacity: 0.7;">Pobrano ${validation.eventsCount} wydarzeń</div>
+        `;
+        document.body.appendChild(successMsg);
+        
+        setTimeout(() => {
+          successMsg.style.transition = 'opacity 0.3s';
+          successMsg.style.opacity = '0';
+          setTimeout(() => {
+            if(document.body.contains(successMsg)){
+              document.body.removeChild(successMsg);
+            }
+          }, 300);
+        }, 2000);
+        
+        return newSchedule;
+      } catch(error) {
+        // Usuń overlay ładowania jeśli istnieje
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if(loadingOverlay){
+          document.body.removeChild(loadingOverlay);
+        }
+        
+        throw error;
+      }
     }
 
     function deleteSchedule(scheduleId){
@@ -402,13 +1103,24 @@
       
       schedules = schedules.filter(s => s.id !== scheduleId);
       
+      // Jeśli usuwamy aktywny harmonogram, aktywuj inny
       if(activeScheduleId === scheduleId){
         activeScheduleId = schedules[0]?.id || null;
-        loadData(); // Reload with new active schedule
+        saveSchedulesToStorage();
+        renderScheduleList(); // Najpierw odśwież listę
+        if(activeScheduleId){
+          loadData(); // Potem załaduj nowe dane
+        } else {
+          // Brak harmonogramów - wyczyść kalendarz
+          if(fc) fc.removeAllEvents();
+          rawData = { events: [] };
+          statElements.total.textContent = '0';
+          statElements.visible.textContent = '0';
+        }
+      } else {
+        saveSchedulesToStorage();
+        renderScheduleList();
       }
-      
-      saveSchedulesToStorage();
-      renderScheduleList();
     }
 
     function switchSchedule(scheduleId){
@@ -527,6 +1239,17 @@
       helpBtn.addEventListener('click', () => {
         modal.classList.add('active');
         renderScheduleList();
+        // Reset tekstu przycisku przy otwieraniu modala
+        const fileInputText = document.getElementById('fileInputText');
+        if(fileInputText) fileInputText.textContent = 'Wybierz plik JSON lub XLSX';
+        fileInput.value = ''; // Wyczyść input pliku
+        
+        // Wyczyść pole URL
+        const urlInput = document.getElementById('urlInput');
+        if(urlInput) {
+          urlInput.value = '';
+          urlInput.style.borderColor = 'rgba(255,255,255,0.1)';
+        }
       });
       
       modalClose.addEventListener('click', () => {
@@ -541,16 +1264,135 @@
       
       fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
-        if(!file) return;
+        const fileInputText = document.getElementById('fileInputText');
+        
+        if(!file){
+          // Reset label jeśli anulowano wybór
+          if(fileInputText) fileInputText.textContent = 'Wybierz plik JSON lub XLSX';
+          return;
+        }
+        
+        console.log('📁 Wybrano plik:', file.name, 'Typ:', file.type, 'Rozmiar:', file.size);
+        
+        // Pokaż nazwę wybranego pliku
+        if(fileInputText) fileInputText.textContent = `📄 ${file.name}`;
+        
+        const fileName = file.name.toLowerCase();
+        const validExtensions = ['.json', '.xlsx', '.xlsm'];
+        const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+        
+        if(!isValid){
+          alert('❌ Nieprawidłowy typ pliku. Obsługiwane formaty: JSON, XLSX, XLSM');
+          fileInput.value = '';
+          if(fileInputText) fileInputText.textContent = 'Wybierz plik JSON lub XLSX';
+          return;
+        }
+        
+        let processing = null;
         
         try{
-          await addScheduleFromFile(file);
-          alert('✅ Harmonogram dodany pomyślnie!');
+          // Pokazanie informacji o przetwarzaniu dla plików XLSX (może trwać dłużej)
+          if(fileName.endsWith('.xlsx') || fileName.endsWith('.xlsm')){
+            processing = document.createElement('div');
+            processing.id = 'processingOverlay';
+            processing.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center;';
+            processing.innerHTML = '<div style="font-size: 16px; margin-bottom: 10px;">⏳ Przetwarzanie pliku XLSX...</div><div style="font-size: 12px; opacity: 0.7;">To może chwilę potrwać</div>';
+            document.body.appendChild(processing);
+            
+            await new Promise(resolve => setTimeout(resolve, 100)); // Daj czas na pokazanie komunikatu
+          }
+          
+          const newSchedule = await addScheduleFromFile(file);
+          
+          if(processing){
+            document.body.removeChild(processing);
+            processing = null;
+          }
+          
           fileInput.value = ''; // Reset input
+          if(fileInputText) fileInputText.textContent = 'Wybierz plik JSON lub XLSX';
+          
+          // Aktywuj nowy harmonogram automatycznie
+          if(newSchedule){
+            activeScheduleId = newSchedule.id;
+            saveSchedulesToStorage();
+            renderScheduleList();
+            loadData(); // Załaduj nowy harmonogram
+          }
+          
+          // Pokaż komunikat sukcesu (zamiast alert)
+          const successMsg = document.createElement('div');
+          successMsg.id = 'successOverlay';
+          successMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
+          successMsg.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+            <div style="font-size: 16px; margin-bottom: 8px; font-weight: bold;">Harmonogram dodany pomyślnie!</div>
+            <div style="font-size: 13px; opacity: 0.7;">${newSchedule ? 'Automatycznie aktywowany' : ''}</div>
+          `;
+          document.body.appendChild(successMsg);
+          
+          // Usuń po 2 sekundach
+          setTimeout(() => {
+            successMsg.style.transition = 'opacity 0.3s';
+            successMsg.style.opacity = '0';
+            setTimeout(() => {
+              if(document.body.contains(successMsg)){
+                document.body.removeChild(successMsg);
+              }
+            }, 300);
+          }, 2000);
         }catch(err){
+          console.error('Błąd dodawania harmonogramu:', err);
+          
+          if(processing){
+            document.body.removeChild(processing);
+          }
+          
           alert('❌ ' + err.message);
+          fileInput.value = '';
+          if(fileInputText) fileInputText.textContent = 'Wybierz plik JSON lub XLSX';
         }
       });
+      
+      // Obsługa dodawania z URL
+      const addUrlBtn = document.getElementById('addUrlBtn');
+      const urlInput = document.getElementById('urlInput');
+      
+      if(addUrlBtn && urlInput){
+        // Obsługa przycisku
+        addUrlBtn.addEventListener('click', async () => {
+          const url = urlInput.value.trim();
+          
+          if(!url){
+            urlInput.focus();
+            urlInput.style.borderColor = 'rgba(255, 90, 90, 0.5)';
+            setTimeout(() => {
+              urlInput.style.borderColor = 'rgba(255,255,255,0.1)';
+            }, 1500);
+            return;
+          }
+          
+          try {
+            await addScheduleFromURL(url);
+            urlInput.value = ''; // Wyczyść input po sukcesie
+          } catch(error) {
+            console.error('Błąd dodawania z URL:', error);
+            alert('❌ ' + error.message);
+          }
+        });
+        
+        // Obsługa Enter w polu URL
+        urlInput.addEventListener('keypress', (e) => {
+          if(e.key === 'Enter'){
+            addUrlBtn.click();
+          }
+        });
+        
+        // Reset stylu inputa przy wpisywaniu
+        urlInput.addEventListener('input', () => {
+          urlInput.style.borderColor = 'rgba(255,255,255,0.1)';
+        });
+      }
     });
     
     // Make functions global
@@ -606,9 +1448,45 @@
         if(activeSchedule.data){
           rawData = activeSchedule.data;
         } else {
-          const res = await fetch(activeSchedule.path, { cache: 'no-store' });
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          rawData = await res.json();
+          // Sprawdź czy to plik XLSX czy JSON
+          const isXlsx = activeSchedule.path.toLowerCase().endsWith('.xlsx') || 
+                        activeSchedule.path.toLowerCase().endsWith('.xlsm');
+          
+          let res;
+          try {
+            // Próba pobrania bezpośrednio
+            res = await fetch(activeSchedule.path, { 
+              cache: 'no-store',
+              mode: 'cors'
+            });
+            
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+          } catch (corsError) {
+            console.warn('⚠️ Błąd CORS, próba użycia CORS proxy...', corsError);
+            
+            // Jeśli CORS nie zadziałał, spróbuj przez proxy
+            const corsProxy = 'https://corsproxy.io/?';
+            const proxiedUrl = corsProxy + encodeURIComponent(activeSchedule.path);
+            
+            res = await fetch(proxiedUrl, { 
+              cache: 'no-store'
+            });
+            
+            if (!res.ok) {
+              throw new Error(`Nie udało się pobrać pliku (status: ${res.status}). Sprawdź połączenie z internetem.`);
+            }
+          }
+          
+          if(isXlsx){
+            // Parsuj XLSX
+            const arrayBuffer = await res.arrayBuffer();
+            rawData = await parseXLSXToEvents(arrayBuffer, activeSchedule.name);
+          } else {
+            // Parsuj JSON
+            rawData = await res.json();
+          }
         }
         
         rawData.events = (rawData.events || []).map(e => normalizeEvent(e));
@@ -647,6 +1525,21 @@
     function unique(values){ return [...new Set(values.filter(Boolean))].sort(); }
 
     function initFilters(events){
+      // POPRAWKA: Wyczyść wszystkie filtry zachowując tylko domyślną opcję "Wszystkie"
+      Object.values(filterElements).forEach(selectEl => {
+        const defaultOption = selectEl.querySelector('option[value=""]');
+        selectEl.innerHTML = ''; // Wyczyść wszystkie opcje
+        if(defaultOption) {
+          selectEl.appendChild(defaultOption.cloneNode(true)); // Przywróć domyślną opcję
+        } else {
+          // Jeśli nie ma domyślnej opcji, stwórz ją
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = selectEl.id === 'lecturer' ? 'Wszyscy' : 'Wszystkie';
+          selectEl.appendChild(opt);
+        }
+      });
+      
       const populateSelect = (selectEl, values) => {
         for(const val of unique(values)){
           const o = document.createElement('option'); o.value=o.textContent=val; selectEl.appendChild(o);
@@ -1124,215 +2017,15 @@
       });
     }
 
-    // Podpięcie przycisku eksportu
+    // Podpięcie przycisku eksportu i inicjalizacja
     document.addEventListener('DOMContentLoaded', ()=>{
       const exportBtn = document.getElementById('exportGoogle');
       if(exportBtn){ exportBtn.addEventListener('click', exportToGoogleCalendar); }
       
       // Inicjalizacja mapy kampusu
       initCampusMap();
-      
-      // Obsługa przycisku powiadomienia widgetu
-      const widgetNotifBtn = document.getElementById('widgetNotification');
-      if(widgetNotifBtn){ 
-        widgetNotifBtn.addEventListener('click', showWidgetNotification); 
-      }
     });
 
-    // Funkcja pokazująca widget jako powiadomienie
-    async function showWidgetNotification() {
-      try {
-        // Sprawdź czy przeglądarka obsługuje powiadomienia
-        if (!('Notification' in window)) {
-          alert('Twoja przeglądarka nie obsługuje powiadomień');
-          return;
-        }
-
-        // Poproś o uprawnienia do powiadomień
-        let permission = Notification.permission;
-        if (permission === 'default') {
-          permission = await Notification.requestPermission();
-        }
-
-        if (permission !== 'granted') {
-          alert('Musisz zezwolić na wyświetlanie powiadomień, aby używać widgetu');
-          return;
-        }
-
-        // Sprawdź czy Service Worker w ogóle istnieje
-        if (!('serviceWorker' in navigator)) {
-          alert('Service Worker nie jest wspierany w tej przeglądarce');
-          return;
-        }
-
-        console.log('🔍 Czekam na Service Worker (max 10s)...');
-        
-        // Poczekaj na Service Worker z timeout
-        let registration;
-        try {
-          registration = await Promise.race([
-            navigator.serviceWorker.ready,
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Timeout')), 10000)
-            )
-          ]);
-          console.log('✅ Service Worker gotowy!');
-        } catch (timeoutError) {
-          console.error('❌ Service Worker nie aktywował się w ciągu 10s');
-          alert('Service Worker ładuje się zbyt wolno. Odśwież stronę i spróbuj ponownie.');
-          return;
-        }
-        
-        console.log('📋 Stan SW:', {
-          installing: !!registration.installing,
-          waiting: !!registration.waiting,
-          active: !!registration.active,
-          scope: registration.scope
-        });
-
-        // Sprawdź czy jest aktywny
-        if (!registration.active) {
-          console.error('❌ Brak aktywnego Service Workera!');
-          alert('Service Worker nie jest aktywny. Odśwież stronę.');
-          return;
-        }
-
-        console.log('📤 Wysyłam polecenie "showWidget" do Service Workera...');
-        registration.active.postMessage({ action: 'showWidget' });
-        console.log('✅ Polecenie wysłane!');
-        
-        showSuccessFeedback();
-
-      } catch (error) {
-        console.error('Błąd podczas wysyłania polecenia do Service Workera:', error);
-        alert('Wystąpił krytyczny błąd przy próbie pokazania powiadomienia: ' + error.message);
-      }
-    }
-
-    // Funkcja do pokazywania feedbacku po kliknięciu
-    function showSuccessFeedback() {
-      const btn = document.getElementById('widgetNotification');
-      if (!btn) return;
-      
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Przypięto!</span>';
-      btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
-      
-      setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.style.background = '';
-      }, 2000);
-    }
-
-    // Funkcja znajdujaca następne zajęcia
-    function getNextClass(data) {
-      const now = new Date();
-      
-      // Jeśli dane mają strukturę z events
-      if (!data.events || !Array.isArray(data.events)) {
-        console.error('Brak danych o zajęciach');
-        return null;
-      }
-
-      let foundClass = null;
-      let minDiff = Infinity;
-
-      for (const event of data.events) {
-        // Parsuj datę i czas wydarzenia
-        const eventDate = new Date(event.date);
-        const [hours, minutes] = event.startTime.split(':').map(Number);
-        eventDate.setHours(hours, minutes, 0, 0);
-        
-        // Oblicz różnicę czasu
-        const diff = eventDate - now;
-        
-        // Pomiń przeszłe zajęcia
-        if (diff < 0) continue;
-        
-        // Znajdź najbliższe zajęcia
-        if (diff < minDiff) {
-          minDiff = diff;
-          foundClass = {
-            title: event.title,
-            start: event.startTime,
-            end: event.endTime,
-            location: event.location,
-            teacher: event.lecturers && event.lecturers.length > 0 ? event.lecturers.join(', ') : '',
-            date: event.date,
-            startDateTime: eventDate
-          };
-        }
-      }
-
-      return foundClass;
-    }
-
-    // Funkcja obliczająca czas do zajęć
-    function getTimeUntilClass(classInfo) {
-      if (!classInfo || !classInfo.startDateTime) return '';
-      
-      const now = new Date();
-      const diff = classInfo.startDateTime - now;
-      const diffMinutes = Math.floor(diff / (1000 * 60));
-      const diffHours = Math.floor(diffMinutes / 60);
-      const diffDays = Math.floor(diffHours / 24);
-
-      if (diffDays > 0) {
-        return `Za ${diffDays} ${diffDays === 1 ? 'dzień' : 'dni'}`;
-      } else if (diffHours > 0) {
-        const remainingMinutes = diffMinutes % 60;
-        if (remainingMinutes > 0) {
-          return `Za ${diffHours}h ${remainingMinutes}min`;
-        }
-        return `Za ${diffHours}h`;
-      } else if (diffMinutes > 0) {
-        return `Za ${diffMinutes} min`;
-      } else {
-        return 'Teraz';
-      }
-    }
-
-    // Widget support - aktualizacja danych dla widgetu
-    async function updateWidgetData() {
-      try {
-        const pick = pickNextOrCurrent(lastFiltered || rawData.events);
-        const widgetData = {
-          lastUpdate: new Date().toISOString(),
-          events: lastFiltered || rawData.events
-        };
-        
-        localStorage.setItem('harm_widget_cache', JSON.stringify({ events: widgetData.events }));
-        
-        // Register periodic background sync if supported
-        if ('serviceWorker' in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype) {
-          try {
-            const registration = await navigator.serviceWorker.ready;
-            await registration.periodicSync.register('update-widget', {
-              minInterval: 5 * 60 * 1000 // 5 minutes
-            });
-          } catch (e) {
-            console.warn('Periodic sync registration failed', e);
-          }
-        }
-      } catch (error) {
-        console.error('Widget data update failed:', error);
-      }
-    }
-
-    // Update widget data when filters change
-    const originalApplyFilters = applyFilters;
-    applyFilters = function() {
-      originalApplyFilters();
-      updateWidgetData();
-    };
-
-    // Initial widget data update
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        updateWidgetData();
-        setInterval(updateWidgetData, 5 * 60 * 1000); // Update every 5 minutes
-      }, 1000);
-    });
     loadData();
   </script>
 </body>

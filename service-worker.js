@@ -1,8 +1,7 @@
-const CACHE_NAME = 'mup-harmonogram-v6';
+const CACHE_NAME = 'mup-harmonogram-v9';
 const URLS_TO_CACHE = [
   './',
   './index.html',
-  './harmonogram.json',
   './logo.png',
   './campus-map.png',
   './manifest.webmanifest',
@@ -11,7 +10,8 @@ const URLS_TO_CACHE = [
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js',
-  'https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js'
+  'https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js',
+  'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'
 ];
 
 self.addEventListener('install', event => {
@@ -106,15 +106,9 @@ self.addEventListener('notificationclick', event => {
 
 async function updateWidget() {
   try {
-    const response = await fetch('./harmonogram.json', { cache: 'no-store' });
-    const data = await response.json();
-    
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put('./harmonogram.json', new Response(JSON.stringify(data)));
-    
-    // Pokaż powiadomienie z następnymi zajęciami
-    await showNextClassNotification(data);
-    
+    // UWAGA: Widget nie działa z XLSX - wymaga lokalnego parsowania
+    // Tymczasowo wyłączamy automatyczne aktualizacje widgetu
+    console.log('SW: Widget wyłączony - używamy plików XLSX');
     return true;
   } catch (error) {
     console.error('Widget update failed:', error);
