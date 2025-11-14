@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mup-harmonogram-v9';
+const CACHE_NAME = 'mup-harmonogram-v10';
 const URLS_TO_CACHE = [
   './',
   './index.html',
