@@ -1,12 +1,28 @@
-const CACHE_NAME = 'mup-harmonogram-v10';
+const CACHE_NAME = 'mup-harmonogram-v12'; // Zwiększona wersja dla automatycznego update'u
 const URLS_TO_CACHE = [
   './',
   './index.html',
+  './styles.css',
   './logo.png',
   './campus-map.png',
   './manifest.webmanifest',
+  './js/main.js',
+  './js/config.js',
+  './js/cache.js',
+  './js/xlsx-parser.js',
+  './js/schedule-manager.js',
+  './js/calendar.js',
+  './js/filters.js',
+  './js/next-tile.js',
+  './js/export.js',
+  './js/ui.js',
+  './js/modals.js'
+];
+
+// Zasoby zewnętrzne - cache z długim TTL
+const EXTERNAL_CACHE = 'mup-external-v1';
+const EXTERNAL_URLS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
-  'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.css',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js',
   'https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js',
@@ -15,45 +31,116 @@ const URLS_TO_CACHE = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Instalacja rozpoczęta...');
-  // UPROSZCZONE: Nie cache'uj podczas instalacji - to blokuje aktywację
-  event.waitUntil(self.skipWaiting());
-  console.log('SW: skipWaiting() wywołane');
+  console.log('✨ SW: Instalacja nowej wersji...');
+  event.waitUntil(
+    Promise.all([
+      // Natychmiast aktywuj nową wersję
+      self.skipWaiting(),
+      // Pre-cache tylko kluczowe zasoby lokalne
+      caches.open(CACHE_NAME).then(cache => {
+        console.log('📦 SW: Cache\'owanie podstawowych zasobów...');
+        return cache.addAll(URLS_TO_CACHE);
+      })
+    ])
+  );
 });
 
 self.addEventListener('activate', event => {
-  console.log('SW: Aktywacja rozpoczęta...');
+  console.log('🔄 SW: Aktywacja...');
   event.waitUntil(
-    self.clients.claim().then(() => {
-      console.log('SW: clients.claim() - Service Worker aktywny!');
+    Promise.all([
+      // Przejmij kontrolę natychmiast
+      self.clients.claim(),
+      // Usuń stare cache'e
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME && cacheName !== EXTERNAL_CACHE) {
+              console.log('🗑️ SW: Usuwam stary cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    ]).then(() => {
+      console.log('✅ SW: Aktywacja zakończona!');
     })
   );
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request).then(response => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Dla plików HTML, CSS, JS - zawsze próbuj najpierw sieci (Network First)
+  if (url.origin === location.origin && 
+      (request.url.endsWith('.html') || 
+       request.url.endsWith('.css') || 
+       request.url.endsWith('.js') || 
+       request.url.endsWith('/'))) {
+    
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // Zapisz nową wersję do cache
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseToCache);
             });
-
+          }
+          return response;
+        })
+        .catch(() => {
+          // Jeśli sieć nie działa, użyj cache
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+  
+  // Dla zasobów zewnętrznych (CDN) - Cache First (rzadko się zmieniają)
+  if (EXTERNAL_URLS.some(extUrl => request.url.startsWith(extUrl.split('?')[0]))) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) {
+          return cached;
+        }
+        return fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(EXTERNAL_CACHE).then(cache => {
+              cache.put(request, responseToCache);
+            });
+          }
           return response;
         });
       })
-  );
+    );
+    return;
+  }
+  
+  // Dla obrazków i innych statycznych zasobów - Cache First
+  if (request.url.endsWith('.png') || request.url.endsWith('.jpg') || 
+      request.url.endsWith('.svg') || request.url.endsWith('.webmanifest')) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        return cached || fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+  
+  // Dla wszystkich innych zasobów - tylko sieć (np. API, harmonogramy XLSX)
+  event.respondWith(fetch(request));
 });
 
 self.addEventListener('message', event => {
