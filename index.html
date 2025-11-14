@@ -825,7 +825,61 @@
 
     // ===== SYSTEM ZARZĄDZANIA HARMONOGRAMAMI =====
     
-    function loadSchedulesFromStorage(){
+    // Funkcja do pobierania aktualnego linku harmonogramu ze strony uczelni
+    async function fetchScheduleUrlFromUniversity(){
+      try {
+        const pageUrl = 'http://uczelniaoswiecim.edu.pl/instytuty/new-instytut-nauk-inzynieryjno-technicznych/harmonogramy/';
+        
+        // Użyj CORS proxy do pobrania strony
+        const corsProxy = 'https://corsproxy.io/?';
+        const proxiedUrl = corsProxy + encodeURIComponent(pageUrl);
+        
+        const response = await fetch(proxiedUrl, {
+          cache: 'no-store'
+        });
+        
+        if(!response.ok){
+          throw new Error(`Nie udało się pobrać strony (status: ${response.status})`);
+        }
+        
+        const html = await response.text();
+        
+        // Parsuj HTML i znajdź link z tekstem zawierającym "Harmonogram na studia niestacjonarne"
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Szukaj linku z tekstem zawierającym "niestacjonarne"
+        const links = Array.from(doc.querySelectorAll('a'));
+        const scheduleLink = links.find(link => {
+          const text = link.textContent || '';
+          const href = link.href || '';
+          return text.toLowerCase().includes('niestacjonarne') && 
+                 (href.toLowerCase().endsWith('.xlsx') || href.toLowerCase().endsWith('.xlsm'));
+        });
+        
+        if(scheduleLink && scheduleLink.href){
+          // Upewnij się że mamy pełny URL
+          let url = scheduleLink.href;
+          if(!url.startsWith('http')){
+            url = new URL(url, pageUrl).href;
+          }
+          
+          // Zamień HTTPS na HTTP (strona uczelni działa na HTTP)
+          url = url.replace(/^https:\/\//i, 'http://');
+          
+          console.log('✅ Znaleziono link do harmonogramu:', url);
+          return url;
+        }
+        
+        throw new Error('Nie znaleziono linku do harmonogramu niestacjonarnego na stronie');
+      } catch(error) {
+        console.error('❌ Błąd pobierania linku harmonogramu:', error);
+        // Fallback do ostatnio znanego URL
+        return 'http://uczelniaoswiecim.edu.pl/wp-content/uploads/2022/10/Harmonogram-studia-niestacjonarne-aktualizacja-13.11.2025.xlsx';
+      }
+    }
+    
+    async function loadSchedulesFromStorage(){
       try{
         const stored = localStorage.getItem(SCHEDULES_STORAGE_KEY);
         schedules = stored ? JSON.parse(stored) : [];
@@ -833,18 +887,43 @@
         
         // Dodaj domyślny harmonogram jeśli nie ma żadnych
         if(schedules.length === 0){
+          // Pobierz aktualny link ze strony uczelni
+          const scheduleUrl = await fetchScheduleUrlFromUniversity();
+          
           schedules.push({
             id: 'default',
             name: 'Harmonogram studia niestacjonarne',
-            path: 'http://uczelniaoswiecim.edu.pl/wp-content/uploads/2022/10/Harmonogram-studia-niestacjonarne-aktualizacja-13.11.2025.xlsx',
+            path: scheduleUrl,
             isDefault: true,
             addedAt: new Date().toISOString(),
             status: 'unknown',
             eventsCount: 0,
-            errors: []
+            errors: [],
+            autoUpdate: true // Flaga oznaczająca że ten harmonogram powinien być automatycznie aktualizowany
           });
           activeScheduleId = 'default';
           saveSchedulesToStorage();
+        }
+        
+        // Sprawdź czy domyślny harmonogram wymaga aktualizacji (raz dziennie)
+        const defaultSchedule = schedules.find(s => s.id === 'default' && s.autoUpdate);
+        if(defaultSchedule){
+          const lastCheck = localStorage.getItem('harm_last_url_check');
+          const now = Date.now();
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          
+          if(!lastCheck || (now - parseInt(lastCheck)) > oneDayMs){
+            console.log('🔄 Sprawdzanie aktualizacji URL harmonogramu...');
+            const newUrl = await fetchScheduleUrlFromUniversity();
+            
+            if(newUrl !== defaultSchedule.path){
+              console.log('✅ Znaleziono nowy URL harmonogramu:', newUrl);
+              defaultSchedule.path = newUrl;
+              saveSchedulesToStorage();
+            }
+            
+            localStorage.setItem('harm_last_url_check', now.toString());
+          }
         }
       }catch(e){
         console.error('Błąd wczytywania harmonogramów', e);
@@ -1211,6 +1290,7 @@
                 
                 <div class="schedule-actions">
                   ${!isActive ? `<button class="schedule-btn primary" onclick="switchSchedule('${schedule.id}')">Aktywuj</button>` : ''}
+                  ${schedule.autoUpdate ? `<button class="schedule-btn secondary" onclick="refreshScheduleUrl('${schedule.id}')" title="Sprawdź czy uczelnia opublikowała nowy harmonogram">🔄 Odśwież URL</button>` : ''}
                   ${!schedule.isDefault ? `<button class="schedule-btn danger" onclick="confirmDeleteSchedule('${schedule.id}')">Usuń</button>` : ''}
                 </div>
               </div>
@@ -1226,6 +1306,75 @@
       const schedule = schedules.find(s => s.id === scheduleId);
       if(confirm(`Czy na pewno chcesz usunąć harmonogram "${schedule.name}"?`)){
         deleteSchedule(scheduleId);
+      }
+    }
+
+    async function refreshScheduleUrl(scheduleId){
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if(!schedule || !schedule.autoUpdate){
+        return;
+      }
+      
+      // Pokaż overlay z ładowaniem
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.id = 'refreshOverlay';
+      loadingOverlay.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
+      loadingOverlay.innerHTML = '<div style="font-size: 16px; margin-bottom: 10px;">🔄 Sprawdzanie strony uczelni...</div><div style="font-size: 12px; opacity: 0.7;">Szukam aktualnego linku do harmonogramu</div>';
+      document.body.appendChild(loadingOverlay);
+      
+      try {
+        const oldUrl = schedule.path;
+        const newUrl = await fetchScheduleUrlFromUniversity();
+        
+        document.body.removeChild(loadingOverlay);
+        
+        if(newUrl !== oldUrl){
+          // Znaleziono nowy URL
+          schedule.path = newUrl;
+          localStorage.setItem('harm_last_url_check', Date.now().toString());
+          saveSchedulesToStorage();
+          renderScheduleList();
+          
+          // Pokaż komunikat o znalezieniu nowej wersji
+          const successMsg = document.createElement('div');
+          successMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
+          successMsg.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 10px;">🆕</div>
+            <div style="font-size: 16px; margin-bottom: 8px; font-weight: bold;">Znaleziono nową wersję!</div>
+            <div style="font-size: 13px; opacity: 0.7; margin-bottom: 12px;">URL harmonogramu został zaktualizowany</div>
+            <button onclick="this.parentElement.remove(); loadData();" style="padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Załaduj nową wersję</button>
+          `;
+          document.body.appendChild(successMsg);
+        } else {
+          // Brak zmian
+          const infoMsg = document.createElement('div');
+          infoMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(11,16,32,0.95); padding: 20px 40px; border-radius: 12px; color: white; z-index: 10001; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
+          infoMsg.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+            <div style="font-size: 16px; margin-bottom: 8px; font-weight: bold;">Masz aktualną wersję</div>
+            <div style="font-size: 13px; opacity: 0.7;">Harmonogram nie zmienił się</div>
+          `;
+          document.body.appendChild(infoMsg);
+          
+          localStorage.setItem('harm_last_url_check', Date.now().toString());
+          
+          setTimeout(() => {
+            infoMsg.style.transition = 'opacity 0.3s';
+            infoMsg.style.opacity = '0';
+            setTimeout(() => {
+              if(document.body.contains(infoMsg)){
+                document.body.removeChild(infoMsg);
+              }
+            }, 300);
+          }, 2000);
+        }
+      } catch(error) {
+        if(document.body.contains(loadingOverlay)){
+          document.body.removeChild(loadingOverlay);
+        }
+        
+        console.error('Błąd odświeżania URL:', error);
+        alert('❌ Nie udało się sprawdzić strony uczelni: ' + error.message);
       }
     }
 
@@ -1398,6 +1547,7 @@
     // Make functions global
     window.switchSchedule = switchSchedule;
     window.confirmDeleteSchedule = confirmDeleteSchedule;
+    window.refreshScheduleUrl = refreshScheduleUrl;
     
     // ===== KONIEC SYSTEMU ZARZĄDZANIA =====
 
@@ -1437,7 +1587,7 @@
 
     async function loadData() {
       try {
-        loadSchedulesFromStorage();
+        await loadSchedulesFromStorage();
         const activeSchedule = getActiveSchedule();
         
         if(!activeSchedule){
@@ -2026,7 +2176,11 @@
       initCampusMap();
     });
 
-    loadData();
+    // Asynchroniczne uruchomienie aplikacji
+    (async () => {
+      await loadSchedulesFromStorage();
+      await loadData();
+    })();
   </script>
 </body>
 </html>
