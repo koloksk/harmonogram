@@ -10,21 +10,29 @@
   <meta name="keywords" content="MUP, harmonogram, plan zajęć, kalendarz, uniwersytet, nieoficjalny plan" />
   <meta name="author" content="koloksk" />
   <meta name="robots" content="index, follow" />
+  <meta name="application-name" content="Harmonogram MUP" />
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pl_PL" />
   <meta property="og:title" content="Harmonogram MUP - Nieoficjalny Plan Zajęć" />
   <meta property="og:description" content="Nieoficjalny harmonogram zajęć MUP. Przeglądaj plan zajęć w formie kalendarza, filtruj wydarzenia i eksportuj do własnego kalendarza." />
   <meta property="og:site_name" content="Harmonogram MUP" />
+  <meta property="og:url" content="https://koloksk.github.io/harmonogram/" />
+  <meta property="og:image" content="https://koloksk.github.io/harmonogram/logo.png" />
+  <meta property="og:image:alt" content="Ekran aplikacji Harmonogram MUP" />
   
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Harmonogram MUP - Nieoficjalny Plan Zajęć" />
   <meta name="twitter:description" content="Nieoficjalny harmonogram zajęć MUP. Przeglądaj plan zajęć w formie kalendarza." />
+  <meta name="twitter:url" content="https://koloksk.github.io/harmonogram/" />
+  <meta name="twitter:image" content="https://koloksk.github.io/harmonogram/logo.png" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="canonical" href="https://koloksk.github.io/harmonogram/">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./logo.png">
   <link rel="apple-touch-icon" href="./logo.png">
@@ -32,6 +40,34 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MUP">
   <meta name="theme-color" content="#0b1020">
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Harmonogram MUP",
+      "url": "https://koloksk.github.io/harmonogram/",
+      "description": "Nieoficjalny harmonogram zajęć MUP z widokiem kalendarza, filtrami i eksportem do Google Kalendarza.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "pl-PL",
+      "author": {
+        "@type": "Person",
+        "name": "koloksk",
+        "url": "https://github.com/koloksk"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "PLN"
+      },
+      "featureList": [
+        "Przegląd zajęć w widoku kalendarza",
+        "Filtruj zajęcia według kierunku, sali i prowadzącego",
+        "Eksportuj wydarzenia do Google Kalendarza"
+      ]
+    }
+  </script>
   <meta name="google-site-verification" content="k25xdebJfW0XlcfMFC-weLROJRpaZQAuEyWCgrUtxSw" />
   
   <!-- Service Worker - rejestracja z auto-update -->
