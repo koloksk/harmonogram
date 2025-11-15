@@ -3,7 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Harmonogram</title>
+  <title>Harmonogram MUP - Nieoficjalny Plan Zajęć</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Nieoficjalny harmonogram zajęć MUP. Przeglądaj plan zajęć w formie kalendarza, filtruj wydarzenia i eksportuj do własnego kalendarza." />
+  <meta name="keywords" content="MUP, harmonogram, plan zajęć, kalendarz, uniwersytet, nieoficjalny plan" />
+  <meta name="author" content="koloksk" />
+  <meta name="robots" content="index, follow" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Harmonogram MUP - Nieoficjalny Plan Zajęć" />
+  <meta property="og:description" content="Nieoficjalny harmonogram zajęć MUP. Przeglądaj plan zajęć w formie kalendarza, filtruj wydarzenia i eksportuj do własnego kalendarza." />
+  <meta property="og:site_name" content="Harmonogram MUP" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Harmonogram MUP - Nieoficjalny Plan Zajęć" />
+  <meta name="twitter:description" content="Nieoficjalny harmonogram zajęć MUP. Przeglądaj plan zajęć w formie kalendarza." />
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -117,6 +135,31 @@
   </header>
 
   <main>
+    <section class="active-schedule" id="activeScheduleBanner" aria-live="polite">
+      <div class="active-schedule-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <circle cx="8" cy="15" r="1"></circle>
+          <circle cx="12" cy="15" r="1"></circle>
+          <circle cx="16" cy="15" r="1"></circle>
+        </svg>
+      </div>
+      <div class="active-schedule-content">
+        <p class="active-schedule-label">Aktywny harmonogram</p>
+        <p class="active-schedule-name" id="activeScheduleName">Ładowanie danych…</p>
+        <div class="active-schedule-meta">
+          <span class="active-schedule-chip active-schedule-chip-status" id="activeScheduleStatus">Status: —</span>
+          <span class="active-schedule-chip" id="activeScheduleEvents">Wydarzenia: —</span>
+          <span class="active-schedule-chip" id="activeScheduleSource">Źródło: —</span>
+        </div>
+      </div>
+      <button class="active-schedule-manage" id="activeScheduleManage" type="button" aria-label="Zmień aktywny harmonogram">
+        Zarządzaj
+      </button>
+    </section>
     <aside>
       <!-- Kafelek następujących zajęć -->
       <div class="next-card" id="nextCard" aria-live="polite">

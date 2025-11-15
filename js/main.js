@@ -8,6 +8,7 @@ import { initUI } from './ui.js';
 import { initScheduleModal } from './modals.js';
 import { loadSchedulesFromStorage, getActiveSchedule, validateScheduleFile, getSchedules, saveSchedulesToStorage } from './schedule-manager.js';
 import { parseXLSXToEvents } from './xlsx-parser.js';
+import { initActiveScheduleBanner, renderActiveScheduleBanner } from './active-schedule.js';
 
 console.log('✨ Harmonogram MUP - wersja modułowa');
 export const version = '2.0.0';
@@ -17,6 +18,7 @@ async function loadData() {
   try {
     await loadSchedulesFromStorage();
     const activeSchedule = getActiveSchedule();
+    renderActiveScheduleBanner(activeSchedule);
 
     if (!activeSchedule) {
       throw new Error('Brak aktywnego harmonogramu');
@@ -83,6 +85,7 @@ async function loadData() {
       schedules[scheduleIndex].errors = validation.errors;
       schedules[scheduleIndex].warnings = validation.warnings || [];
       saveSchedulesToStorage();
+      renderActiveScheduleBanner(schedules[scheduleIndex]);
     }
 
     setRawData(rawData);
@@ -109,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initExportButton(getLastFiltered);
   initUI();
   initScheduleModal();
+  initActiveScheduleBanner();
 
   // Załaduj dane
   await loadData();

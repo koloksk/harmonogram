@@ -40,6 +40,62 @@ main{
   align-items: start; /* Ważne dla sticky sidebar */
 }
 
+.active-schedule{
+  grid-column: 1 / -1;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:16px 18px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:linear-gradient(135deg, rgba(15,21,43,0.95) 0%, rgba(17,25,53,0.95) 100%);
+  box-shadow:0 12px 35px rgba(3,7,18,0.45);
+  isolation:isolate;
+}
+.active-schedule-icon{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  background:rgba(124,156,255,0.15);
+  border:1px solid rgba(124,156,255,0.25);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--accent);
+  flex-shrink:0;
+}
+.active-schedule-content{flex:1; min-width:0;}
+.active-schedule-label{margin:0; text-transform:uppercase; letter-spacing:0.08em; font-size:11px; color:var(--muted); font-weight:600}
+.active-schedule-name{margin:4px 0 8px; font-size:18px; font-weight:700; color:var(--text); letter-spacing:0.01em}
+.active-schedule-meta{display:flex; flex-wrap:wrap; gap:8px; color:var(--muted); font-size:13px}
+.active-schedule-chip{
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+}
+.active-schedule-chip-status{transition:background 0.2s, border-color 0.2s, color 0.2s;}
+.active-schedule[data-status="success"] .active-schedule-chip-status{background:rgba(124,255,196,0.1); border-color:rgba(124,255,196,0.4); color:#8ff5d1}
+.active-schedule[data-status="warning"] .active-schedule-chip-status{background:rgba(255,200,120,0.1); border-color:rgba(255,200,120,0.4); color:#ffd59b}
+.active-schedule[data-status="error"] .active-schedule-chip-status{background:rgba(255,90,90,0.12); border-color:rgba(255,90,90,0.45); color:#ffb3b3}
+.active-schedule[data-status="unknown"] .active-schedule-chip-status{background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.18); color:#d9def4}
+.active-schedule-manage{
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(135deg, var(--accent) 0%, #5471ff 100%);
+  color:#050915;
+  font-weight:700;
+  padding:10px 18px;
+  cursor:pointer;
+  transition:transform 0.2s, box-shadow 0.2s;
+  box-shadow:0 10px 25px rgba(124,156,255,0.35);
+}
+.active-schedule-manage:hover{transform:translateY(-1px); box-shadow:0 14px 30px rgba(124,156,255,0.4)}
+.active-schedule-manage:active{transform:translateY(0); box-shadow:0 8px 18px rgba(124,156,255,0.3)}
+
 /* ZMIANA: Nowy breakpoint dla lepszej responsywności na tabletach */
 @media (max-width: 1100px){
   main{ grid-template-columns: 280px 1fr; }
@@ -50,6 +106,18 @@ main{
     padding-left: 12px;
     padding-right: 12px;
   } 
+  .active-schedule{
+    flex-direction:column;
+    align-items:flex-start;
+    width:100%;
+    max-width:600px;
+    padding:12px 14px;
+    gap:12px;
+  }
+  .active-schedule-manage{
+    width:100%;
+    text-align:center;
+  }
 }
 
 /* ZMIANA: Sidebar jest "lepki" na desktopie i ma własny scroll w razie potrzeby */
@@ -62,7 +130,6 @@ aside{
   overflow-x: hidden; /* Zapobiega poziomemu scrollowaniu */
   scrollbar-gutter: stable; /* Rezerwuje miejsce dla scrollbara, zapobiega przeskokom */
 }
-
 /* Niestandardowy scrollbar dla sidebara */
 aside::-webkit-scrollbar{
   width: 8px;
@@ -82,8 +149,6 @@ aside::-webkit-scrollbar-thumb:hover{
 }
 
 #calendar{
-  background:var(--panel); 
-  border:1px solid var(--border); 
   border-radius:14px; 
   padding:8px;
   width: 100%; /* Upewnij się, że kalendarz zajmuje pełną szerokość kontenera */
@@ -118,9 +183,9 @@ button.reset{background:var(--accent); color:#0a0f21; border:0; font-weight:700;
 
 /* Wydarzenia z gradientami */
 .fc .fc-daygrid-event, .fc .fc-timegrid-event{
-  border-radius:8px; 
   border:1px solid rgba(124,156,255,0.3); 
-  background:linear-gradient(135deg, rgba(32,48,87,0.9) 0%, rgba(20,35,70,0.9) 100%);
+  background:linear-gradient(135deg, rgba(32,48,87,0.95) 0%, rgba(16,29,64,0.95) 100%);
+  color:var(--event-text);
   overflow:hidden;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -197,6 +262,11 @@ button.reset{background:var(--accent); color:#0a0f21; border:0; font-weight:700;
     flex-direction: column;
     align-items: center;
   }
+  .active-schedule{
+    order:-4;
+    width:100%;
+    max-width:600px;
+  }
   /* Na mobile: kafelek wychodzi poza sidebar i idzie na górę */
   .next-card{
     order: -3;
@@ -264,10 +334,34 @@ button.reset{background:var(--accent); color:#0a0f21; border:0; font-weight:700;
   .fc-timeGridDay-view .fc-timegrid-event .tm{font-size:11px; opacity:0.9; font-weight:600}
   .fc-timeGridDay-view .fc-timegrid-col-events{margin:0 4px}
 }
+@media (max-width: 600px){
+  .active-schedule{
+    padding:10px 12px;
+    gap:10px;
+    border-radius:12px;
+    flex-direction:row;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .active-schedule-icon{width:36px; height:36px; border-radius:10px; flex-shrink:0}
+  .active-schedule-content{flex:1 1 auto; min-width:0}
+  .active-schedule-manage{order:3; width:100%; font-size:12px; padding:8px 12px}
+  .active-schedule-label{font-size:10px}
+  .active-schedule-name{font-size:14px; margin-bottom:4px}
+  .active-schedule-meta{gap:6px; font-size:10px}
+  .active-schedule-chip{padding:4px 8px; font-size:10px}
+  #activeScheduleEvents, #activeScheduleSource{display:none}
+}
 @media (max-width: 480px){
   header { padding: 8px 10px; }
   header h1 { font-size: 14px; }
   .seg button { padding: 5px 7px; font-size: 10px; }
+  .active-schedule{padding:8px 10px; gap:6px; border-radius:10px}
+  .active-schedule-icon{width:32px; height:32px}
+  .active-schedule-label{font-size:9px}
+  .active-schedule-name{font-size:12px}
+  .active-schedule-chip{font-size:9px; padding:3px 6px}
+  .active-schedule-manage{font-size:11px; padding:7px 10px}
   .fc .fc-toolbar{gap:4px}
   .fc .fc-toolbar-title{font-size:13px}
   .fc .fc-button{padding:4px 7px; font-size:10px}
