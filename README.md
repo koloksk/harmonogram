@@ -9,7 +9,7 @@
 [![PWA](https://img.shields.io/badge/PWA-ready-orange.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 [![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
-[🚀 Demo na żywo](https://koloksk.github.io/harmonogram/) | [📖 Dokumentacja](https://github.com/koloksk/harmonogram/wiki) | [🐛 Zgłoś błąd](https://github.com/koloksk/harmonogram/issues)
+[🚀 Demo na żywo](https://koloksk.github.io/harmonogram/) | [📖 Dokumentacja](#-dokumentacja) | [🐛 Zgłoś błąd](https://github.com/koloksk/harmonogram/issues)
 
 ---
 
@@ -17,127 +17,146 @@
 
 </div>
 
-## ✨ Funkcje
+---
 
-### 🎯 Podstawowe
-- **📊 Trzy widoki kalendarza**: Miesiąc, Tydzień, Dzień
-- **🔍 Zaawansowane filtry**: Kierunek studiów, rodzaj zajęć, sala, wykładowca
-- **💾 Automatyczny zapis**: Filtry zapisują się lokalnie
-- **📱 PWA Ready**: Instaluj jako aplikację mobilną
-- **🌙 Ciemny motyw**: Elegancki, nowoczesny design
-- **📍 Mapa kampusu**: Interaktywna mapa z trzema budynkami (CsH, CP, CI)
-- **🔄 Auto-update**: Automatyczne pobieranie nowych wersji aplikacji bez konieczności ręcznego odświeżania
+## ✨ Główne funkcje
 
-### 🚀 Zaawansowane
-- **⏰ Następne zajęcia**: Kafelek z aktualnie trwającymi lub nadchodzącymi zajęciami
-- ** Pasek postępu**: Wizualizacja trwania zajęć
-- **🔴 Zajęcia zdalne**: Automatyczne wykrywanie i oznaczanie (wykrywanie czerwonego koloru w Excel)
-- **📤 Eksport do Google Calendar**: Pobierz plik .ics z przefiltrowanymi wydarzeniami
-- **💡 Inteligentne tooltip'y**: Szczegółowe informacje po najechaniu myszką
-- **📋 Popover "+XX więcej"**: Eleganckie okienko z listą dodatkowych wydarzeń
-- ** Import XLSX**: Importuj pliki Excel bezpośrednio w przeglądarce (bez Pythona!)
-- **🗂️ Zarządzanie harmonogramami**: Dodawaj wiele harmonogramów i przełączaj się między nimi
-- **🌐 Automatyczne pobieranie**: Pobiera harmonogram bezpośrednio z serwera uczelni (z obsługą CORS)
+<table>
+<tr>
+<td width="50%">
 
-## 🖼️ Zrzuty ekranu
+### 📊 Widok kalendarza
+- **Trzy tryby**: Miesiąc, Tydzień, Dzień
+- **Responsywny design** dla desktop i mobile
+- **Interaktywne wydarzenia** z tooltip'ami
+- **Elegancki dark mode** jako domyślny
 
-### Desktop
-- Widok miesięczny z filtrami po lewej
-- Interaktywna mapa kampusu
-- Kafelek następnych zajęć
+### 🔍 Filtry i wyszukiwanie
+- Filtrowanie po **kierunku studiów**
+- Wybór **rodzaju zajęć** (wykłady, laboratoria, projekty)
+- Sortowanie po **salach** i **wykładowcach**
+- **Automatyczny zapis** ustawień w localStorage
 
-### Mobile
-- Responsywny design dostosowany do małych ekranów
-- Kompaktowy widok wydarzeń
-- Łatwa nawigacja jedną ręką
+### 🗂️ Multi-harmonogramy
+- Zarządzanie przez **intuicyjny modal**
+- Import z **URL** lub **plików lokalnych**
+- Wsparcie dla **.xlsx, .xlsm, .json**
 
-## 🛠️ Technologie
+</td>
+<td width="50%">
 
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+### 🌐 Automatyczne pobieranie
+- **Śledzi stronę uczelni** i aktualizuje URL
+- **CORS proxy** jako automatyczny fallback
+- Parsowanie **Excel w przeglądarce** (SheetJS)
+- **Wykrywanie zajęć zdalnych** (kolor czerwony)
+
+### 📱 Progressive Web App
+- **Instalacja** na ekran główny (iOS/Android)
+- **Działanie offline** z Service Worker
+- **Powiadomienia push** o zajęciach
+- **Auto-update** nowych wersji aplikacji
+
+### 📤 Eksport i udostępnianie
+- Pobierz plik **.ics** (Google Calendar)
+- **Tylko przefiltrowane** wydarzenia
+- Kompatybilny z **Apple Calendar, Outlook**
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Szybki start
+
+### Wymagania
+
+- Przeglądarka obsługująca ES6+ (Chrome, Firefox, Safari, Edge)
+- Serwer HTTP (Python, Node.js, Live Server)
+- *Opcjonalnie*: Python 3.x dla parsera CLI
+
+### Instalacja
+
+```bash
+# Sklonuj repozytorium
+git clone https://github.com/koloksk/harmonogram.git
+cd harmonogram
+
+# Uruchom lokalny serwer
+python -m http.server 8000
+
+# Lub użyj Node.js
+npx http-server -p 8000
+
+# Lub VS Code Live Server
+# Kliknij PPM na index.html → "Open with Live Server"
+```
+
+### Otwórz w przeglądarce
+
+```
+http://localhost:8000
+```
+
+**🎉 Gotowe!** Aplikacja automatycznie pobierze najnowszy harmonogram z uczelni.
+
+---
+
+## 🛠️ Stack technologiczny
+
+<table>
+<tr>
+<td width="33%" align="center">
+
+### Frontend
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+
+</td>
+<td width="33%" align="center">
+
+### Biblioteki
+![FullCalendar](https://img.shields.io/badge/FullCalendar-4285F4?style=for-the-badge&logo=google-calendar&logoColor=white)
+![SheetJS](https://img.shields.io/badge/SheetJS-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)
+
+</td>
+<td width="33%" align="center">
+
+### PWA
+![Service Worker](https://img.shields.io/badge/Service_Worker-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
+![Web Manifest](https://img.shields.io/badge/Web_Manifest-FF6D00?style=for-the-badge&logo=pwa&logoColor=white)
+
+</td>
+</tr>
+</table>
+
+### Szczegóły techniczne
+
+- **Frontend**: Vanilla JavaScript ES6+ (bez frameworków!)
 - **Kalendarz**: [FullCalendar](https://fullcalendar.io/) v6.1.15
-- **Parser XLSX**: [SheetJS](https://sheetjs.com/) v0.20.1
-- **Czcionka**: [Inter](https://fonts.google.com/specimen/Inter) (Google Fonts)
-- **Format danych**: JSON, XLSX, XLSM
-- **PWA**: Service Worker, Web Manifest
-- **Backend opcjonalny**: Python 3.x z `openpyxl` (jeśli wolisz CLI)
+- **Parser XLSX**: [SheetJS (xlsx)](https://sheetjs.com/) v0.20.1
+- **Czcionka**: [Inter](https://fonts.google.com/specimen/Inter) z Google Fonts
+- **Architektura**: Modularna struktura ES6 Modules
+- **Storage**: localStorage + IndexedDB (przyszłość)
+- **PWA**: Service Worker z cache strategies
+- **CORS**: Proxy fallback (corsproxy.io)
 
-## 📦 Instalacja i Użycie
-
-### Metoda 1: Import XLSX bezpośrednio w przeglądarce ⚡ (ZALECANE)
-
-1. **Sklonuj repozytorium**
-   ```bash
-   git clone https://github.com/koloksk/harmonogram.git
-   cd harmonogram
-   ```
-
-2. **Uruchom lokalnie**
-   ```bash
-   # Python 3
-   python -m http.server 8000
-   
-   # Lub użyj dowolnego serwera HTTP
-   ```
-
-3. **Otwórz w przeglądarce**
-   ```
-   http://localhost:8000
-   ```
-
-### 🌐 Automatyczne ładowanie z serwera uczelni
-
-**Aplikacja automatycznie pobiera najnowszy harmonogram studiów niestacjonarnych z serwera MUP:**
-
-```
-https://uczelniaoswiecim.edu.pl/wp-content/uploads/2022/10/Harmonogram-studia-niestacjonarne-aktualizacja-23.10.2025.xlsx
-```
-
-**Harmonogram jest pobierany i parsowany automatycznie przy każdym uruchomieniu!** 🎉  
-
-**Jak to działa:**
-1. 🔄 Aplikacja próbuje pobrać plik bezpośrednio z serwera uczelni
-2. 🛡️ Jeśli serwer blokuje CORS, automatycznie używa proxy (corsproxy.io)
-3. 📊 Plik XLSX jest parsowany przez ExcelJS bezpośrednio w przeglądarce
-4. 📅 Wydarzenia są wyświetlane w kalendarzu FullCalendar
-
-**Zalety:**
-- ✅ **Zawsze aktualne dane** - pobierane bezpośrednio z uczelni
-- ✅ **Automatyczne parsowanie** - XLSX → kalendarz bez żadnej konfiguracji
-- ✅ **Brak instalacji** - wszystko działa w przeglądarce
-- ✅ **Wykrywanie zdalnych zajęć** - automatyczne rozpoznawanie czerwonego koloru
-- ✅ **Obsługa CORS** - inteligentny fallback przez proxy
-- ✅ **Działa wszędzie** - każda nowoczesna przeglądarka
-
-### ➕ Dodawanie własnych harmonogramów
-
-**Metoda 1: Import z URL** 🌐
-- Kliknij przycisk `?` w prawym górnym rogu
-- Wprowadź URL pliku (XLSX, XLSM lub JSON)
-- Przykład: `https://uczelnia.edu.pl/harmonogram.xlsx`
-- Kliknij "Dodaj" - harmonogram zostanie pobrany i sparsowany automatycznie
-
-**Metoda 2: Import z pliku lokalnego** 📁
-- Kliknij przycisk `?` w prawym górnym rogu
-- Wybierz "Wybierz plik JSON lub XLSX"
-- Przeglądaj i wybierz lokalny plik `.xlsx`, `.xlsm` lub `.json`
-
-**Import plików JSON (opcjonalnie):**
-1. Wygeneruj JSON używając `main.py`:
-   ```bash
-   pip install openpyxl
-   python main.py harmonogram.xlsx
-   ```
-2. Importuj przez przycisk `?` → "Dodaj nowy harmonogram"
+---
 
 ## 📄 Format danych
 
-### Struktura `harmonogram.json`
+### Struktura JSON
+
+Aplikacja obsługuje pliki JSON w następującym formacie:
+
 ```json
 {
   "events": [
     {
       "title": "Programowanie Obiektowe",
-      "date": "2025-11-15",
+      "date": "2025-12-08",
       "startTime": "08:00",
       "endTime": "09:30",
       "program": "Informatyka",
@@ -151,256 +170,146 @@ https://uczelniaoswiecim.edu.pl/wp-content/uploads/2022/10/Harmonogram-studia-ni
 }
 ```
 
-### Parser XLSX
+### Pola wydarzenia
 
-Skrypt `main.py` automatycznie:
-- ✅ Rozpoznaje daty polskie (np. "15 października 2025")
-- ✅ Wykrywa zajęcia zdalne (czerwony kolor czcionki)
-- ✅ Parsuje wykładowców i sale
-- ✅ Obsługuje różne formaty komórek Excel
-- ✅ Dodaje statystyki i logi postępu
-- ✅ Cachuje wyniki dla lepszej wydajności
+| Pole | Typ | Wymagane | Opis |
+|------|-----|----------|------|
+| `title` | string | ✅ | Nazwa przedmiotu/zajęć |
+| `date` | string | ✅ | Data w formacie `YYYY-MM-DD` |
+| `startTime` | string | ✅ | Godzina rozpoczęcia `HH:MM` |
+| `endTime` | string | ✅ | Godzina zakończenia `HH:MM` |
+| `program` | string | ❌ | Kierunek studiów |
+| `type` | string | ❌ | Typ zajęć (W, LAB, PROJEKT, ĆW, K) |
+| `location` | string | ❌ | Sala/budynek |
+| `lecturers` | array | ❌ | Lista wykładowców |
+| `zjazd` | string | ❌ | Numer zjazdu |
+| `isRemote` | boolean | ❌ | Czy zajęcia zdalne |
 
-### Użycie parsera
-```bash
-# Podstawowe
-python main.py plik.xlsx
-
-# Z konkretnym arkuszem
-python main.py plik.xlsx "Arkusz1"
-
-# Wyświetla pomoc
-python main.py
-```
 
 ## 🎨 Personalizacja
 
-### Kolory (CSS Variables)
+### Zmiana kolorów (CSS Variables)
+
+Edytuj `styles.css`:
+
 ```css
 :root {
   --bg: #0b1020;        /* Tło strony */
   --panel: #0f152b;     /* Panele/karty */
   --accent: #7c9cff;    /* Kolor akcentu */
   --danger: #ff5a5a;    /* Wydarzenia zdalne */
-  --text: #e8ecf1;      /* Tekst */
+  --text: #e8ecf1;      /* Tekst główny */
   --muted: #9aa1b2;     /* Tekst wyciszony */
+  --border: #1e2641;    /* Obramowania */
 }
 ```
 
-### Mapa kampusu
-Dodaj własne budynki edytując SVG w `index.html`:
+### Dodanie budynków do mapy
+
+Edytuj SVG w `index.html`:
+
 ```html
 <polygon 
   class="building-area" 
-  data-building="kod" 
-  data-name="Pełna Nazwa"
-  points="x1,y1 x2,y2 ...">
+  data-building="NEW"
+  data-name="Nowy Budynek"
+  points="x1,y1 x2,y2 x3,y3">
 </polygon>
 ```
 
-## 🔔 Widget w powiadomieniu
+### Własne ikony PWA
 
-**NOWOŚĆ!** Ponieważ przeglądarki mobilne nie pozwalają na dodawanie prawdziwych widgetów, stworzyliśmy alternatywne rozwiązanie - **widget jako trwałe powiadomienie**.
+Zamień pliki:
+- `logo.png` (512x512 px, PNG)
+- `manifest.webmanifest` → zaktualizuj ścieżki ikon
 
-### Jak używać?
-1. Kliknij przycisk **"Przypnij widget"** w kafelku następnych zajęć
-2. Zezwól na wyświetlanie powiadomień
-3. Powiadomienie z najbliższymi zajęciami pojawi się automatycznie
-4. Service Worker aktualizuje dane co 5 minut w tle
+---
 
-### Co pokazuje powiadomienie?
-- 📚 Tytuł zajęć
-- ⏰ Godzina rozpoczęcia
-- 📍 Sala/lokalizacja  
-- 👨‍🏫 Prowadzący
-- ⏱️ Czas do rozpoczęcia (np. "Za 2h 15min")
-
-### Zalety
-- ✅ Działa na każdym telefonie (iOS, Android)
-- ✅ Zawsze widoczne w pasku powiadomień
-- ✅ Automatyczna aktualizacja w tle
-- ✅ Szybki dostęp do harmonogramu
-- ✅ Niskie zużycie baterii
-
-📖 Szczegółowa instrukcja: [WIDGET_NOTIFICATION.md](./WIDGET_NOTIFICATION.md)
-
-## 🌐 Progressive Web App (PWA)
-
-Aplikacja jest w pełni funkcjonalną PWA:
-
-1. **Instalacja**: Kliknij "Zainstaluj" w przeglądarce
-2. **Offline**: Service Worker cache'uje pliki
-3. **Ikona**: Własne logo na ekranie głównym
-4. **Manifest**: Pełna konfiguracja w `manifest.webmanifest`
+## 🌐 Progressive Web App
 
 ### Funkcje PWA
-- 📱 Instalacja na ekran główny
-- 🔌 Działanie offline (częściowe)
-- 🎨 Własny splash screen
-- 📊 Pełnoekranowy tryb
-- 🔔 Powiadomienia push
 
-### 🔄 Automatyczne aktualizacje
+| Funkcja | Desktop | Mobile | Opis |
+|---------|---------|--------|------|
+| 📱 Instalacja | ✅ | ✅ | Dodaj do ekranu głównego |
+| 🔌 Offline | ✅ | ✅ | Częściowe działanie bez internetu |
+| 🔔 Powiadomienia | ✅ | ✅ | Push notifications |
+| 🔄 Auto-update | ✅ | ✅ | Automatyczne aktualizacje |
+| 🎨 Splash screen | ❌ | ✅ | Ekran startowy (mobile) |
+| 📊 Full screen | ✅ | ✅ | Tryb pełnoekranowy |
 
-Aplikacja automatycznie sprawdza dostępność nowych wersji:
+### Strategia cache'owania
 
-**Jak to działa:**
-- Service Worker sprawdza aktualizacje co minutę
-- Gdy dostępna jest nowa wersja, pojawia się powiadomienie w prawym dolnym rogu
-- Kliknij powiadomienie aby załadować nową wersję
-- Aktualizacja dzieje się natychmiast - bez potrzeby ręcznego czyszczenia cache
+**HTML/CSS/JS** → Network First (zawsze próbuje pobrać najnowsze)  
+**Obrazy** → Cache First (szybkie ładowanie)  
+**Biblioteki CDN** → Cache First z długim TTL  
+**Harmonogramy** → Network Only (zawsze aktualne dane)
 
-**Strategia cache'owania:**
-- **HTML/CSS/JS**: Network First (zawsze próbuje pobrać najnowszą wersję)
-- **Obrazy**: Cache First (szybkie ładowanie)
-- **CDN (biblioteki)**: Cache First z długim TTL
-- **Harmonogramy (XLSX)**: Tylko sieć (zawsze aktualne dane)
+### Auto-update
 
-**Co się dzieje przy aktualizacji na GitHub:**
-1. Nowa wersja zostaje wdrożona na GitHub Pages
-2. Service Worker wykrywa zmianę przy następnym otwarciu strony
-3. Pojawia się powiadomienie "🆕 Dostępna aktualizacja!"
-4. Kliknięcie powiadomienia ładuje nową wersję
-5. Stare cache'e są automatycznie usuwane
+1. Service Worker sprawdza aktualizacje **co minutę**
+2. Gdy nowa wersja jest dostępna → pojawia się **powiadomienie**
+3. Kliknij powiadomienie → **natychmiastowa aktualizacja**
+4. Stare cache'e są **automatycznie usuwane**
 
-**Wymuszenie aktualizacji ręcznie:**
-- Opcja 1: Kliknij powiadomienie o aktualizacji (gdy się pojawi)
-- Opcja 2: Ctrl+Shift+R (hard reload) w przeglądarce
-- Opcja 3: Wyczyść cache strony w ustawieniach przeglądarki
+**Wymuś aktualizację ręcznie:**
+- `Ctrl + Shift + R` (hard reload)
+- DevTools → Application → Clear storage
+- Kliknij powiadomienie o aktualizacji
 
-## 🔧 Rozwój
 
-### Struktura projektu
+---
+
+## 📝 Licencja
+
+**MIT License** © 2025 [koloksk](https://github.com/koloksk)
+
 ```
-harmonogram/
-├── index.html              # Główna aplikacja
-├── main.py                 # Parser XLSX → JSON
-├── harmonogram.json        # Dane wydarzeń
-├── service-worker.js       # PWA Service Worker
-├── manifest.webmanifest    # PWA Manifest
-├── logo.png                # Logo aplikacji
-├── campus-map.png          # Zdjęcie kampusu
-├── campus-map.svg          # Wektorowa mapa
-└── icons/                  # Ikony PWA
-    ├── icon-192.svg
-    ├── icon-512.svg
-    └── README.txt
-```
+MIT License
 
-### TODO / Roadmap
-- [ ] Backend API dla dynamicznego ładowania danych
-- [ ] Synchronizacja z Google Calendar (dwukierunkowa)
-- [ ] Powiadomienia push o zbliżających się zajęciach
-- [ ] Tryb jasny (light mode)
-- [ ] Zapisywanie notatek do wydarzeń
-- [ ] Współdzielenie harmonogramu (link)
-- [ ] Eksport do PDF
+Copyright (c) 2025 koloksk
 
-## 🗂️ Domyślne harmonogramy
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Dodaj listę predefiniowanych harmonogramów w pliku `js/default-schedules.js`.
-Każdy wpis powinien mieć pola:
-- `id` (opcjonalne) — unikalny identyfikator
-- `name` — nazwa wyświetlana
-- `path` — URL do pliku (.xlsx lub .json)
-- `parseType` — `'xlsx'` lub `'json'` (jeśli nie podane, wywnioskuje z rozszerzenia)
-- `fetchFromUniversity` — gdy true, aplikacja użyje mechanizmu automatycznego wyszukiwania aktualnego URL na stronie uczelni
-- `pageUrl` — opcjonalny adres strony uczelni, z której aplikacja będzie szukać linku do pliku; jeśli puste, używana jest domyślna strona w kodzie
-- `path` — bezpośredni link do pliku; jeśli podany i `fetchFromUniversity` jest false, to będzie użyty
-- `autoUpdate` — gdy true, harmonogram będzie sprawdzany codziennie pod kątem aktualizacji URL
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Przykład:
-
-```js
-export const DEFAULT_SCHEDULES = [
-  {
-    id: 'niestacjonarne',
-    name: 'Harmonogram - studia niestacjonarne (uczelnia)',
-    fetchFromUniversity: true,
-    parseType: 'xlsx',
-    autoUpdate: true
-  }
-];
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
-## 🤝 Kontrybuowanie
+---
 
-Chętnie przyjmujemy pull requesty! Przed dodaniem:
-
-1. Stwórz fork repozytorium
-2. Utwórz branch z funkcją (`git checkout -b feature/NowaFunkcja`)
-3. Commit zmian (`git commit -m 'Dodaj NowaFunkcja'`)
-4. Push do brancha (`git push origin feature/NowaFunkcja`)
-5. Otwórz Pull Request
-
-### Standardy kodu
-- ✅ Vanilla JavaScript (bez frameworków)
-- ✅ Komentarze po polsku
-- ✅ Responsive design first
-- ✅ Accessibility (ARIA labels)
-
-## � Dokumentacja
-
-Szczegółowe instrukcje i przewodniki:
-
-### 👤 Dla użytkowników:
-- **[USER_GUIDE.md](USER_GUIDE.md)** - Kompletna instrukcja użytkownika
-  - Jak korzystać z powiadomień
-  - Rozwiązywanie problemów
-  - FAQ
-
-### 📱 Mobile:
-- **[MOBILE_TEST.md](MOBILE_TEST.md)** - Testowanie na telefonie
-  - Jak przetestować przez WiFi
-  - Diagnostyka Service Worker
-  - Checklist testowy
-  
-- **[MOBILE_FIX.md](MOBILE_FIX.md)** - Szczegóły techniczne (mobile)
-  - Wyjaśnienie hybrydowego API
-  - Różnice między desktop a mobile
-  - Kompatybilność przeglądarek
-
-### 🔧 Dla deweloperów:
-- **[CHANGELOG_MOBILE.md](CHANGELOG_MOBILE.md)** - Historia zmian (mobile support)
-  - Co zostało zmienione
-  - Jak przetestować
-  - Debugowanie
-  
-- **[WIDGET_NOTIFICATION.md](WIDGET_NOTIFICATION.md)** - Widget w powiadomieniu (desktop)
-  - Implementacja podstawowa
-  - API dokumentacja
-
-### 🧪 Testowanie:
-- **[test-widget.html](test-widget.html)** - Strona testowa z diagnostyką
-  - Testy powiadomień
-  - Sprawdzanie Service Worker
-  - Automatyczne logi
-
-## �📝 Licencja
-
-MIT License - Zobacz [LICENSE](LICENSE) dla szczegółów.
 
 ## 👨‍💻 Autor
 
 **koloksk**
-- GitHub: [@koloksk](https://github.com/koloksk)
 
-## 🙏 Podziękowania
+[![GitHub](https://img.shields.io/badge/GitHub-koloksk-181717?style=for-the-badge&logo=github)](https://github.com/koloksk)
+[![Email](https://img.shields.io/badge/Email-Kontakt-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:kontakt.koloksk@gmail.com)
 
-- [FullCalendar](https://fullcalendar.io/) - Doskonała biblioteka kalendarza
-- [Inter Font](https://rsms.me/inter/) - Piękna czcionka UI
-- [openpyxl](https://openpyxl.readthedocs.io/) - Parser Excela dla Pythona
+---
 
-## 📞 Wsparcie
+## ⭐ Star History
 
-Znalazłeś bug? Masz pomysł na funkcję?
-
-- 🐛 [Zgłoś issue](https://github.com/koloksk/harmonogram/issues)
-- 💡 [Dyskusja](https://github.com/koloksk/harmonogram/discussions)
-- 📧 Email: [twoj@email.pl](mailto:twoj@email.pl)
+[![Star History Chart](https://api.star-history.com/svg?repos=koloksk/harmonogram&type=Date)](https://star-history.com/#koloksk/harmonogram&Date)
 
 ---
 
 <div align="center">
-  <sub>Zbudowane z ❤️ dla studentów MUP</sub>
+
+**Zbudowane z ❤️ dla studentów MUP**
+
+[⬆️ Powrót na górę](#-harmonogram-mup)
+
 </div>
