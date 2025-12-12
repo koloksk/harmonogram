@@ -204,18 +204,6 @@ Edytuj `styles.css`:
 }
 ```
 
-### Dodanie budynków do mapy
-
-Edytuj SVG w `index.html`:
-
-```html
-<polygon 
-  class="building-area" 
-  data-building="NEW"
-  data-name="Nowy Budynek"
-  points="x1,y1 x2,y2 x3,y3">
-</polygon>
-```
 
 ### Własne ikony PWA
 
