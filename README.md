@@ -9,7 +9,7 @@
 [![PWA](https://img.shields.io/badge/PWA-ready-orange.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 [![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
-[🚀 Demo na żywo](https://koloksk.github.io/harmonogram/) | [📖 Dokumentacja](#-dokumentacja) | [🐛 Zgłoś błąd](https://github.com/koloksk/harmonogram/issues)
+[🚀 Demo na żywo](https://koloksk.github.io/harmonogram/) | [🐛 Zgłoś błąd](https://github.com/koloksk/harmonogram/issues)
 
 ---
 
